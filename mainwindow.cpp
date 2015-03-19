@@ -10,19 +10,26 @@
 #include "GL/gl.h"
 #include <cstdint>
 
+enum class pixel_format_type : uint32_t {
+    RGBA,
+    RGB,
+    BGR,
+    Luminance
+};
+
 static QImage::Format toQImageFormat( uint32_t f )
 {
-    switch( f )
+    switch( pixel_format_type(f) )
     {
-    case GL_RGB:
-    case GL_BGR:
+    case pixel_format_type::RGB:
+    case pixel_format_type::BGR:
     default:
         return QImage::Format_RGB888;
 
-    case GL_RGBA:
+    case pixel_format_type::RGBA:
         return QImage::Format_RGBA8888;
 
-    case GL_LUMINANCE:
+    case pixel_format_type::Luminance:
         return QImage::Format_Indexed8;
     }
 }
@@ -37,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->scrollArea->setWidgetResizable(true);
     flowLayout = new FlowLayout;
     ui->scrollArea->widget()->setLayout(flowLayout);
-
+    ui->scrollArea->setVisible(false);
 
     QFile f("/home/sim/src_3dyne/dd_081131_exec/out.bundle");
 
@@ -61,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     capnp::List<Asset>::Reader listReader = bundleReader.getAssets();
     auto numAssets = listReader.size();
 
-    //for( size_t j = 0; j < 1000; ++j )
+   // for( size_t j = 0; j < 1000; ++j )
     {
         for( size_t i = 0; i < numAssets; ++i )
         {
@@ -91,7 +98,7 @@ MainWindow::MainWindow(QWidget *parent) :
             QString title = assetReader.getName().cStr();
 
 
-
+#if 0
             auto * ele = new AssetBrowserElement();
             ele->setTitle(title);
             ele->setFromQImage(QImage(dataReader.begin(), mipmapLevelReader.getWidth(), mipmapLevelReader.getHeight(), toQImageFormat(cookedReader.getPixelFormat())).mirrored(false, true));
@@ -99,7 +106,14 @@ MainWindow::MainWindow(QWidget *parent) :
             flowLayout->addWidget(ele);
 
             ele->setVisible(true);
-
+#else
+            ui->listWidget->setIconSize(QSize(32,32));
+            ui->listWidget->setResizeMode(QListWidget::Adjust);
+            ui->listWidget->setViewMode(QListWidget::IconMode);
+            ui->listWidget->setMovement(QListWidget::Static);
+            ui->listWidget->setTextElideMode(Qt::ElideLeft);
+            ui->listWidget->addItem(new QListWidgetItem(QIcon(QPixmap::fromImage(QImage(dataReader.begin(), mipmapLevelReader.getWidth(), mipmapLevelReader.getHeight(), toQImageFormat(cookedReader.getPixelFormat())).mirrored(false, true))), title));
+#endif
 //            if( qrand() / double(RAND_MAX) < 0.3 )
 //            {
 //                auto * ele = new AssetBrowserElement();
