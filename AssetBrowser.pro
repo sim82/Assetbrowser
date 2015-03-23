@@ -18,12 +18,14 @@ SOURCES += main.cpp\
         asset.capnp.c++ \
     assetbrowserelement.cpp \
     browsercontent.cpp \
-    flowlayout.cpp
+    flowlayout.cpp \
+    elementviewdelegate.cpp
 
 HEADERS  += mainwindow.h \
     assetbrowserelement.h \
     browsercontent.h \
-    flowlayout.h
+    flowlayout.h \
+    elementviewdelegate.h
 
 FORMS    += mainwindow.ui \
     assetbrowserelement.ui \
