@@ -154,7 +154,7 @@ CAPNP_DECLARE_STRUCT(
     1, 3, INLINE_COMPOSITE);
 CAPNP_DECLARE_STRUCT(
     ::AssetBundle, fb040be03edab697,
-    0, 1, POINTER);
+    0, 2, INLINE_COMPOSITE);
 CAPNP_DECLARE_STRUCT(
     ::GUID, d14b172834c0bb6f,
     2, 0, INLINE_COMPOSITE);
@@ -801,6 +801,9 @@ public:
     return _reader.totalSize().asPublic();
   }
 
+  inline bool hasName() const;
+  inline  ::capnp::List< ::capnp::Text>::Reader getName() const;
+
   inline bool hasAssets() const;
   inline  ::capnp::List< ::Asset>::Reader getAssets() const;
 
@@ -833,6 +836,14 @@ public:
   inline Reader asReader() const { return *this; }
 
   inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+
+  inline bool hasName();
+  inline  ::capnp::List< ::capnp::Text>::Builder getName();
+  inline void setName( ::capnp::List< ::capnp::Text>::Reader value);
+  inline void setName(::kj::ArrayPtr<const  ::capnp::Text::Reader> value);
+  inline  ::capnp::List< ::capnp::Text>::Builder initName(unsigned int size);
+  inline void adoptName(::capnp::Orphan< ::capnp::List< ::capnp::Text>>&& value);
+  inline ::capnp::Orphan< ::capnp::List< ::capnp::Text>> disownName();
 
   inline bool hasAssets();
   inline  ::capnp::List< ::Asset>::Builder getAssets();
@@ -1665,36 +1676,72 @@ inline ::capnp::Orphan< ::AssetMaterialDesc> Asset::Builder::disownMaterialDesc(
       _builder.getPointerField(2 * ::capnp::POINTERS));
 }
 
-inline bool AssetBundle::Reader::hasAssets() const {
+inline bool AssetBundle::Reader::hasName() const {
   return !_reader.getPointerField(0 * ::capnp::POINTERS).isNull();
 }
-inline bool AssetBundle::Builder::hasAssets() {
+inline bool AssetBundle::Builder::hasName() {
   return !_builder.getPointerField(0 * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List< ::capnp::Text>::Reader AssetBundle::Reader::getName() const {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::get(
+      _reader.getPointerField(0 * ::capnp::POINTERS));
+}
+inline  ::capnp::List< ::capnp::Text>::Builder AssetBundle::Builder::getName() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::get(
+      _builder.getPointerField(0 * ::capnp::POINTERS));
+}
+inline void AssetBundle::Builder::setName( ::capnp::List< ::capnp::Text>::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::set(
+      _builder.getPointerField(0 * ::capnp::POINTERS), value);
+}
+inline void AssetBundle::Builder::setName(::kj::ArrayPtr<const  ::capnp::Text::Reader> value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::set(
+      _builder.getPointerField(0 * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List< ::capnp::Text>::Builder AssetBundle::Builder::initName(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::init(
+      _builder.getPointerField(0 * ::capnp::POINTERS), size);
+}
+inline void AssetBundle::Builder::adoptName(
+    ::capnp::Orphan< ::capnp::List< ::capnp::Text>>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::adopt(
+      _builder.getPointerField(0 * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List< ::capnp::Text>> AssetBundle::Builder::disownName() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::disown(
+      _builder.getPointerField(0 * ::capnp::POINTERS));
+}
+
+inline bool AssetBundle::Reader::hasAssets() const {
+  return !_reader.getPointerField(1 * ::capnp::POINTERS).isNull();
+}
+inline bool AssetBundle::Builder::hasAssets() {
+  return !_builder.getPointerField(1 * ::capnp::POINTERS).isNull();
 }
 inline  ::capnp::List< ::Asset>::Reader AssetBundle::Reader::getAssets() const {
   return ::capnp::_::PointerHelpers< ::capnp::List< ::Asset>>::get(
-      _reader.getPointerField(0 * ::capnp::POINTERS));
+      _reader.getPointerField(1 * ::capnp::POINTERS));
 }
 inline  ::capnp::List< ::Asset>::Builder AssetBundle::Builder::getAssets() {
   return ::capnp::_::PointerHelpers< ::capnp::List< ::Asset>>::get(
-      _builder.getPointerField(0 * ::capnp::POINTERS));
+      _builder.getPointerField(1 * ::capnp::POINTERS));
 }
 inline void AssetBundle::Builder::setAssets( ::capnp::List< ::Asset>::Reader value) {
   ::capnp::_::PointerHelpers< ::capnp::List< ::Asset>>::set(
-      _builder.getPointerField(0 * ::capnp::POINTERS), value);
+      _builder.getPointerField(1 * ::capnp::POINTERS), value);
 }
 inline  ::capnp::List< ::Asset>::Builder AssetBundle::Builder::initAssets(unsigned int size) {
   return ::capnp::_::PointerHelpers< ::capnp::List< ::Asset>>::init(
-      _builder.getPointerField(0 * ::capnp::POINTERS), size);
+      _builder.getPointerField(1 * ::capnp::POINTERS), size);
 }
 inline void AssetBundle::Builder::adoptAssets(
     ::capnp::Orphan< ::capnp::List< ::Asset>>&& value) {
   ::capnp::_::PointerHelpers< ::capnp::List< ::Asset>>::adopt(
-      _builder.getPointerField(0 * ::capnp::POINTERS), kj::mv(value));
+      _builder.getPointerField(1 * ::capnp::POINTERS), kj::mv(value));
 }
 inline ::capnp::Orphan< ::capnp::List< ::Asset>> AssetBundle::Builder::disownAssets() {
   return ::capnp::_::PointerHelpers< ::capnp::List< ::Asset>>::disown(
-      _builder.getPointerField(0 * ::capnp::POINTERS));
+      _builder.getPointerField(1 * ::capnp::POINTERS));
 }
 
 inline  ::uint32_t GUID::Reader::getV0() const {

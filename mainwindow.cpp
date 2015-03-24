@@ -12,6 +12,8 @@
 #include <QStyledItemDelegate>
 #include <QStandardItemModel>
 #include "elementviewdelegate.h"
+#include "assetcollection.h"
+#include "assetcollectionitemmodel.h"
 
 enum class pixel_format_type : uint32_t {
     RGBA,
@@ -64,11 +66,30 @@ private:
 
 };
 
+const char *mimetypeToQtImageType(const char *mimetype)
+{
+    std::string s(mimetype);
+
+    if( mimetype == "image/png")
+    {
+        return "PNG";
+    }
+    else if( mimetype == "image/jpeg" )
+    {
+        return "JPEG";
+    }
+
+    return nullptr;
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+
+
     ui->setupUi(this);
+
     //flowLayout = new FlowLayout(ui->scrollArea);
     //ui->scrollArea->setWidget(flowLayout->widget());
 #if 0
@@ -78,14 +99,25 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->scrollArea->setVisible(false);
     ui->listWidget->setVisible(false);
 #endif
-    itemModel = new QStandardItemModel();
+    itemModel = new AssetCollectionItemModel();
     ui->listView->setModel(itemModel);
+    ui->listView->setAcceptDrops(true);
+    ui->listView->setDragEnabled(true);
+    ui->listView->setDropIndicatorShown(true);
+    ui->listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
     //ui->listView->setItemDelegate(new QStyledItemDelegate());
-    ui->listView->setItemDelegate(new ElementViewDelegate());
+
+    AssetCollection * ac = new AssetCollection("/home/sim/src_3dyne/dd_081131_exec/assets/", this);
+    ac->fullRescan();
+
+    ui->listView->setItemDelegate(new ElementViewDelegate(*ac));
     ui->listView->setViewMode(QListView::IconMode);
     ui->listView->setResizeMode(QListView::Adjust);
     ui->listView->setIconSize(QSize(128, 128));
 
+
+#if 0
     bundle = std::make_unique<BundleData>();
     capnp::ReaderOptions readerOptions;
     readerOptions.traversalLimitInWords = 1024 * 1024 * 1024;
@@ -98,7 +130,7 @@ MainWindow::MainWindow(QWidget *parent) :
     capnp::List<Asset>::Reader listReader = bundleReader.getAssets();
     auto numAssets = listReader.size();
 
-   // for( size_t j = 0; j < 1000; ++j )
+    //for( size_t j = 0; j < 1000; ++j )
     {
         for( size_t i = 0; i < numAssets; ++i )
         {
@@ -176,6 +208,69 @@ MainWindow::MainWindow(QWidget *parent) :
 
         }
     }
+#else
+
+    for( size_t i = 0; i < ac->size(); ++i )
+    {
+
+#if 0
+        try {
+            capnp::FlatArrayMessageReader fr(ac->at(i));
+            Asset::Reader assetReader = fr.getRoot<Asset>();
+
+
+            if( !assetReader.hasPixelData() )
+            {
+                continue;
+            }
+            if( !assetReader.getPixelData().hasStored() )
+            {
+                continue;
+            }
+
+
+
+
+            AssetPixelDataStored::Reader storedReader = assetReader.getPixelData().getStored();
+            const uchar *data = storedReader.getData().begin();
+            const uint len = storedReader.getData().size();
+
+            QPixmap pm;
+            pm.loadFromData(data, len, mimetypeToQtImageType(storedReader.getMimeType().begin()));
+
+
+
+            QString title = assetReader.getName().cStr();
+
+            QStandardItem *item = new QStandardItem();
+
+
+            //QImage image(":res/cross.png");
+            QImage image(pm.toImage().mirrored());
+            item->setData( image, ElementViewDelegate::IconRole);
+
+    //        auto image = QImage(dataReader.begin()
+    //                , mipmapLevelReader.getWidth()
+    //                , mipmapLevelReader.getHeight()
+    //                , toQImageFormat(cookedReader.getPixelFormat()));//.mirrored(false, true);
+    //        item->setData( image, ElementViewDelegate::IconRole);
+            item->setData( title, ElementViewDelegate::headerTextRole);
+            itemModel->appendRow(item);
+        }
+        catch( kj::Exception x )
+        {
+            std::cout << "capnp exception: " << x.getDescription().cStr() << "\n";
+        }
+#else
+        QStandardItem *item = new QStandardItem();
+
+
+        item->setData( int(i), ElementViewDelegate::RawDataRole);
+//        item->setData( title, ElementViewDelegate::headerTextRole);
+        itemModel->appendRow(item);
+#endif
+    }
+#endif
 }
 
 MainWindow::~MainWindow()
@@ -196,7 +291,9 @@ void MainWindow::on_horizontalSlider_actionTriggered(int action)
     }
 
 
-    int iconSize = 32 + ui->horizontalSlider->value() * 16;
+    //int iconSize = 32 + ui->horizontalSlider->value() * 16;
+    int iconSize = ui->horizontalSlider->value();
+    ui->label->setText(QString("size: %1").arg(ui->horizontalSlider->value()));
     ui->listView->setIconSize(QSize(iconSize, iconSize));
 
     if( bSelection )
@@ -204,4 +301,9 @@ void MainWindow::on_horizontalSlider_actionTriggered(int action)
 
         ui->listView->scrollTo(index);
     }
+}
+
+void MainWindow::on_listView_activated(const QModelIndex &index)
+{
+
 }

@@ -19,13 +19,17 @@ SOURCES += main.cpp\
     assetbrowserelement.cpp \
     browsercontent.cpp \
     flowlayout.cpp \
-    elementviewdelegate.cpp
+    elementviewdelegate.cpp \
+    assetcollection.cpp \
+    assetcollectionitemmodel.cpp
 
 HEADERS  += mainwindow.h \
     assetbrowserelement.h \
     browsercontent.h \
     flowlayout.h \
-    elementviewdelegate.h
+    elementviewdelegate.h \
+    assetcollection.h \
+    assetcollectionitemmodel.h
 
 FORMS    += mainwindow.ui \
     assetbrowserelement.ui \

@@ -23,6 +23,8 @@ public:
 private slots:
     void on_horizontalSlider_actionTriggered(int action);
 
+    void on_listView_activated(const QModelIndex &index);
+
 private:
     Ui::MainWindow *ui;
     FlowLayout *flowLayout;
