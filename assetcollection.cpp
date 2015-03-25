@@ -4,6 +4,7 @@
 #include "asset.capnp.h"
 #include "capnp/serialize.h"
 #include <QVector>
+#include <QUuid>
 
 AssetCollection::AssetCollection(const char *path, QObject *parent)
     : QObject(parent), baseDir_(path)
@@ -22,32 +23,57 @@ AssetCollection::~AssetCollection()
 
 size_t AssetCollection::size() const
 {
-    return assets_.size();
+    return id_asset_map_.size();
 }
 
-AssetCollection::Entry const & AssetCollection::entryAt(int pos) const
+//AssetCollection::Entry const & AssetCollection::entryAt(int pos) const
+//{
+//    return *(assets_.at(pos));
+//}
+
+const AssetCollection::Entry &AssetCollection::entry(const QUuid &id) const
 {
-    return *(assets_.at(pos));
+    auto it = id_asset_map_.find(id);
+
+    if( it == id_asset_map_.end() )
+    {
+        throw std::runtime_error( "unknown id" );
+    }
+
+    return *(it->second);
 }
 
-kj::ArrayPtr<const capnp::word> AssetCollection::at(int pos)
+std::vector<QUuid> AssetCollection::idList() const
 {
-    const Entry &ent = *(assets_.at(pos));
-    const QByteArray &ba = ent.data;
-    const size_t size = ba.size();
+    std::vector<QUuid> list;
+    list.reserve(id_asset_map_.size());
 
-    return kj::ArrayPtr<const capnp::word>(reinterpret_cast<const capnp::word*>(ba.data()), size / sizeof(capnp::word));
+    for( auto it = id_asset_map_.begin(), eit = id_asset_map_.end(); it != eit; ++it )
+    {
+        list.emplace_back(it->first);
+    }
 
-
-
-//    capnp::ReaderOptions readerOptions;
-//    readerOptions.traversalLimitInWords = 1024 * 1024 * 1024;
-//    auto data = ::kj::heapArray<::kj::byte>(ba.size());
-//    ::kj::ArrayInputStream ais(data);
-//    ::capnp::InputStreamMessageReader r(ais, readerOptions);
-
-//    return r.getRoot<Asset>();
+    return list;
 }
+
+//kj::ArrayPtr<const capnp::word> AssetCollection::at(int pos)
+//{
+//    const Entry &ent = *(assets_.at(pos));
+//    const QByteArray &ba = ent.data;
+//    const size_t size = ba.size();
+
+//    return kj::ArrayPtr<const capnp::word>(reinterpret_cast<const capnp::word*>(ba.data()), size / sizeof(capnp::word));
+
+
+
+////    capnp::ReaderOptions readerOptions;
+////    readerOptions.traversalLimitInWords = 1024 * 1024 * 1024;
+////    auto data = ::kj::heapArray<::kj::byte>(ba.size());
+////    ::kj::ArrayInputStream ais(data);
+////    ::capnp::InputStreamMessageReader r(ais, readerOptions);
+
+////    return r.getRoot<Asset>();
+//}
 
 void AssetCollection::fullRescan()
 {
@@ -73,17 +99,25 @@ void AssetCollection::fullRescan()
 
 
         //file.rea
-        //const size_t size = file.size();
-        //const uchar *ptr = file.map(0, size);
+        const size_t size = file.size();
+        const uchar *ptr = file.map(0, size);
 
         //assets_.push_back(QVector<uchar>(ptr, ptr+size));
 
 
-        assets_.push_back(std::make_unique<Entry>(file.fileName()));
+//        assets_.push_back(std::make_unique<Entry>(file.fileName()));
 
-        //capnp::FlatArrayMessageReader fr( kj::ArrayPtr<const capnp::word>(reinterpret_cast<const capnp::word*>(ptr), size / sizeof(capnp::word)));
+        capnp::FlatArrayMessageReader fr( kj::ArrayPtr<const capnp::word>(reinterpret_cast<const capnp::word*>(ptr), size / sizeof(capnp::word)));
 
-        //Asset::Reader = fr.getRoot<Asset>();
+        Asset::Reader assetReader = fr.getRoot<Asset>();
+
+
+        QUuid uuid(assetReader.getGuid().cStr());
+
+        std::cout << "uuid: " << uuid.toString().toStdString() << "\n";
+
+        id_asset_map_.emplace(uuid, std::make_unique<Entry>(file.fileName()));
+
     }
 }
 

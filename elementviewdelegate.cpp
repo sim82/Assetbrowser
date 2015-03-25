@@ -4,8 +4,8 @@
 #include "elementviewdelegate.h"
 #include <capnp/serialize.h>
 
-ElementViewDelegate::ElementViewDelegate(const AssetCollection &collection)
-    : collection_(collection)
+ElementViewDelegate::ElementViewDelegate( AssetCollectionPreviewCache &cache)
+    : cache_(cache)
 {
 
 }
@@ -127,44 +127,46 @@ void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 //    }
 //    else if( !index.data(RawDataRole).isNull())
     {
-        auto const & ent = collection_.entryAt(index.data(RawDataRole).toInt());
+        QUuid id = index.data(RawDataRole).toUuid();
 
-        capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
-        Asset::Reader assetReader = fr.getRoot<Asset>();
+//        auto const & ent = collection_.entry(id);
 
-
-        if( !assetReader.hasPixelData() )
-        {
-            return;
-        }
-        if( !assetReader.getPixelData().hasStored() )
-        {
-            return;
-        }
+//        capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
+//        Asset::Reader assetReader = fr.getRoot<Asset>();
 
 
-
-
-        AssetPixelDataStored::Reader storedReader = assetReader.getPixelData().getStored();
-        const uchar *data = storedReader.getData().begin();
-        const uint len = storedReader.getData().size();
-
-        QPixmap pixmap;
-        pixmap.loadFromData(data, len, mimetypeToQtImageType(storedReader.getMimeType().begin()));
+//        if( !assetReader.hasPixelData() )
+//        {
+//            return;
+//        }
+//        if( !assetReader.getPixelData().hasStored() )
+//        {
+//            return;
+//        }
 
 
 
-        QString headerText = assetReader.getName().cStr();
 
-        QRect iconRect = option.rect;
-        iconRect.adjust(8,8, -8, -8);
+//        AssetPixelDataStored::Reader storedReader = assetReader.getPixelData().getStored();
+//        const uchar *data = storedReader.getData().begin();
+//        const uint len = storedReader.getData().size();
 
-        QSize size = fitSize( pixmap.size(), iconRect.size() );
-                //    painter->drawPixmap(QRect(iconRect.left()
-                //                              , iconRect.top()
-                //                              , iconRect.width()
-                //                              , iconRect.height())
-                //                        ,pixmap);
+//        QPixmap pixmap;
+//        pixmap.loadFromData(data, len, mimetypeToQtImageType(storedReader.getMimeType().begin()));
+
+
+
+//        QString headerText = assetReader.getName().cStr();
+
+//        QRect iconRect = option.rect;
+//        iconRect.adjust(8,8, -8, -8);
+
+//        QSize size = fitSize( pixmap.size(), iconRect.size() );
+//                //    painter->drawPixmap(QRect(iconRect.left()
+//                //                              , iconRect.top()
+//                //                              , iconRect.width()
+//                //                              , iconRect.height())
+//                //                        ,pixmap);
 
 
         QFont font = QApplication::font();
@@ -174,14 +176,38 @@ void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         SubFont.setWeight(SubFont.weight()-2);
         QFontMetrics fm(font);
 
-        QRect headerRect(option.rect.left(), option.rect.top(), option.rect.width(), fm.height());
+        cache_.request(id);
+        QIcon & icon = cache_.get(id);
+
+        QRect iconRect = option.rect;
+        iconRect.adjust(8,8, -8, -8 - fm.height() * 2);
+
+        //QRect headerRect(option.rect.left(), option.rect.top(), option.rect.width(), fm.height() * 2);
+        QRect headerRect(option.rect.left(), iconRect.bottom(), option.rect.width(), fm.height() * 2);
         headerRect.adjust(8, 0, -8, 0);
-        painter->drawText(headerRect, Qt::AlignRight|Qt::AlignVCenter, headerText);
-        painter->drawPixmap(QRect(iconRect.left()
-                                  , iconRect.top() + fm.height() + 8
-                                  , size.width()
-                                  , size.height())
-                        ,pixmap);
+
+        QString headerText = id.toString();
+        painter->drawText(headerRect, Qt::AlignHCenter|Qt::AlignVCenter|Qt::TextWrapAnywhere, headerText);
+
+
+        QImage image = icon.pixmap(iconRect.size()).toImage();
+
+        QRect actualIconRect (iconRect.left()
+                               , iconRect.top() + fm.height() + 8
+                               , image.width()
+                               , image.height()
+                             );
+
+        QPen pen( QBrush(Qt::blue), 4.0 );
+        painter->setPen(pen);
+        painter->drawRect(actualIconRect);
+        painter->drawImage( actualIconRect
+                            , image );
+        //        painter->drawPixmap(QRect(iconRect.left()
+//                                  , iconRect.top() + fm.height() + 8
+//                                  , size.width()
+//                                  , size.height())
+//                        ,pixmap);
 
     }
 

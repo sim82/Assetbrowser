@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     flowlayout.cpp \
     elementviewdelegate.cpp \
     assetcollection.cpp \
-    assetcollectionitemmodel.cpp
+    assetcollectionitemmodel.cpp \
+    assetcollectionpreviewcache.cpp
 
 HEADERS  += mainwindow.h \
     assetbrowserelement.h \
@@ -29,7 +30,8 @@ HEADERS  += mainwindow.h \
     flowlayout.h \
     elementviewdelegate.h \
     assetcollection.h \
-    assetcollectionitemmodel.h
+    assetcollectionitemmodel.h \
+    assetcollectionpreviewcache.h
 
 FORMS    += mainwindow.ui \
     assetbrowserelement.ui \

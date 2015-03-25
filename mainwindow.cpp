@@ -111,7 +111,9 @@ MainWindow::MainWindow(QWidget *parent) :
     AssetCollection * ac = new AssetCollection("/home/sim/src_3dyne/dd_081131_exec/assets/", this);
     ac->fullRescan();
 
-    ui->listView->setItemDelegate(new ElementViewDelegate(*ac));
+    AssetCollectionPreviewCache *acpc = new AssetCollectionPreviewCache( *ac, this );
+
+    ui->listView->setItemDelegate(new ElementViewDelegate(*acpc));
     ui->listView->setViewMode(QListView::IconMode);
     ui->listView->setResizeMode(QListView::Adjust);
     ui->listView->setIconSize(QSize(128, 128));
@@ -210,7 +212,9 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 #else
 
-    for( size_t i = 0; i < ac->size(); ++i )
+
+    auto const& uuids = ac->idList();
+    for( size_t i = 0; i < uuids.size(); ++i )
     {
 
 #if 0
@@ -265,7 +269,7 @@ MainWindow::MainWindow(QWidget *parent) :
         QStandardItem *item = new QStandardItem();
 
 
-        item->setData( int(i), ElementViewDelegate::RawDataRole);
+        item->setData( uuids[i], ElementViewDelegate::RawDataRole);
 //        item->setData( title, ElementViewDelegate::headerTextRole);
         itemModel->appendRow(item);
 #endif

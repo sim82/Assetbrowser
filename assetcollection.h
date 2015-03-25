@@ -8,7 +8,8 @@
 #include "kj/array.h"
 #include <memory>
 #include <vector>
-
+#include <map>
+#include <QUuid>
 class AssetCollection : public QObject
 {
     Q_OBJECT
@@ -27,9 +28,12 @@ public:
     ~AssetCollection();
 
     size_t size() const;
-    kj::ArrayPtr<const capnp::word> at(int pos);
+//    kj::ArrayPtr<const capnp::word> at(int pos);
 
-    const AssetCollection::Entry &entryAt(int pos) const;
+//    const AssetCollection::Entry &entryAt(int pos) const;
+    const AssetCollection::Entry &entry(QUuid const& id) const;
+
+    std::vector<QUuid> idList() const;
 signals:
 
 public slots:
@@ -41,7 +45,9 @@ private:
 
 
 
-    std::vector<std::unique_ptr<Entry>> assets_;
+//    std::vector<std::unique_ptr<Entry>> assets_;
+
+    std::map<QUuid, std::unique_ptr<Entry>> id_asset_map_;
 };
 
 #endif // ASSETCOLLECTION_H
