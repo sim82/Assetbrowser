@@ -39,3 +39,6 @@ FORMS    += mainwindow.ui \
 
 RESOURCES += \
     resources.qrc
+
+DISTFILES += \
+    dark.qss

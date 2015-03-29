@@ -2,4 +2,8 @@
     <qresource prefix="/res">
         <file>cross.png</file>
     </qresource>
+    <qresource prefix="/"/>
+    <qresource prefix="/qss">
+        <file>dark.qss</file>
+    </qresource>
 </RCC>

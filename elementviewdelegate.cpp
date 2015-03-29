@@ -15,24 +15,35 @@ ElementViewDelegate::~ElementViewDelegate()
 
 }
 
+static QRect getIconBox()
+{
+    QRect iconBox(0, 0, 64, 64);
+    iconBox += QMargins(24, 8, 24, 8);
+
+    return iconBox;
+}
+
+
+static QRect getTextBox()
+{
+    static QFont font = QApplication::font();
+    static QFontMetrics fm(font);
+
+    QRect textBox(0, 0, 64, fm.height() * 2);
+    textBox += QMargins(24, 0, 24, 16);
+
+    return textBox;
+}
+
 QSize ElementViewDelegate::sizeHint(const QStyleOptionViewItem &  option ,
                                   const QModelIndex & /*index*/) const
 {
-   // QIcon icon = qvariant_cast<QIcon>(index.data(IconRole));
-   // QSize iconsize = icon.actualSize(option.decorationSize);
+    auto iconBox = getIconBox();
+    auto textBox = getTextBox();
 
-    if( option.decorationSize.width() < 96 )
-    {
-        return option.decorationSize;
-    }
-    QFont font = QApplication::font();
-    QFontMetrics fm(font);
+    textBox.moveTopLeft(iconBox.bottomLeft());
 
-   // return(QSize(iconsize.width(),iconsize.height()+fm.height() +8 ));
-
-//    return icon.actualSize(option.decorationSize);
-    return option.decorationSize + QSize(0, fm.height() +8) + QSize(16,16);
-//    return(QSize(128, 128 ));
+    return ( iconBox | textBox ).size();
 }
 
 static QSize fitSize( const QSize &src, const QSize &dest )
@@ -69,7 +80,10 @@ void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 {
     QStyledItemDelegate::paint(painter,option,index);
 
+
     painter->save();
+
+
 
 
 //    if( !index.data(IconRole).isNull())
@@ -179,35 +193,56 @@ void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         cache_.request(id);
         QIcon & icon = cache_.get(id);
 
-        QRect iconRect = option.rect;
-        iconRect.adjust(8,8, -8, -8 - fm.height() * 2);
+        QRect iconBox(getIconBox());
 
-        //QRect headerRect(option.rect.left(), option.rect.top(), option.rect.width(), fm.height() * 2);
-        QRect headerRect(option.rect.left(), iconRect.bottom(), option.rect.width(), fm.height() * 2);
-        headerRect.adjust(8, 0, -8, 0);
+        iconBox.moveTopLeft(option.rect.topLeft());
+
+        QRect textBox(getTextBox());
+
+        textBox.moveTopLeft(iconBox.bottomLeft());
+
+        QSize iconTargetSize(64, 64);
+        QSize iconSize = icon.actualSize(iconTargetSize);
+        QRect iconRect = QRect(QPoint(0,0), iconSize);
+        iconRect.moveCenter(iconBox.center());
+
+        QRect textRect(QPoint(0,0), QSize(64 + 32, fm.height() * 2));
+        textRect.moveCenter(textBox.center());
+        textRect.moveTop( textBox.top() );
+
+//        painter->setPen(Qt::NoPen);
+//        painter->setBrush(option.palette.window());
+//        painter->drawRect(option.rect);
+
+//        QRect bgRect = option.rect;
+//        bgRect -= QMargins(1, 1, 1, 1);
+//        bgRect.moveCenter(option.rect.center());
+//        painter->setBrush(QBrush(Qt::gray));
+//        painter->drawRect(bgRect);
 
         QString headerText = id.toString();
-        painter->drawText(headerRect, Qt::AlignHCenter|Qt::AlignVCenter|Qt::TextWrapAnywhere, headerText);
+        painter->setPen(QPen(option.palette.windowText(), 1.0));
+        painter->drawText(textRect, Qt::AlignHCenter|Qt::AlignTop|Qt::TextWrapAnywhere, headerText);
 
-
+        //icon.actualSize()
         QImage image = icon.pixmap(iconRect.size()).toImage();
 
-        QRect actualIconRect (iconRect.left()
-                               , iconRect.top() + fm.height() + 8
-                               , image.width()
-                               , image.height()
-                             );
 
-        QPen pen( QBrush(Qt::blue), 4.0 );
-        painter->setPen(pen);
-        painter->drawRect(actualIconRect);
-        painter->drawImage( actualIconRect
+//        painter->setPen(QPen(QBrush(Qt::blue), 4.0));
+        painter->setPen(QPen(QBrush(Qt::blue, Qt::Dense4Pattern), 4.0));
+
+        QBrush bgBrush(Qt::Dense4Pattern);
+        QMatrix bgMatrix;
+        bgMatrix.scale(10, 10);
+        bgBrush.setMatrix(bgMatrix);
+        painter->setBrush(bgBrush);
+        painter->drawRect(iconRect);
+
+
+        painter->drawImage( iconRect
                             , image );
-        //        painter->drawPixmap(QRect(iconRect.left()
-//                                  , iconRect.top() + fm.height() + 8
-//                                  , size.width()
-//                                  , size.height())
-//                        ,pixmap);
+//        painter->setPen(QPen(QBrush(Qt::red), 1.0));
+//        painter->drawRect(option.rect);
 
     }
 

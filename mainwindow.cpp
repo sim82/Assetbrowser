@@ -106,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->listView->setDropIndicatorShown(true);
     ui->listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
+
     //ui->listView->setItemDelegate(new QStyledItemDelegate());
 
     AssetCollection * ac = new AssetCollection("/home/sim/src_3dyne/dd_081131_exec/assets/", this);
