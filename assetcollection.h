@@ -34,6 +34,7 @@ public:
     const AssetCollection::Entry &entry(QUuid const& id) const;
 
     std::vector<QUuid> idList() const;
+    std::vector<std::string> nameList() const;
 signals:
 
 public slots:

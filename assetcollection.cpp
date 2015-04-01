@@ -56,6 +56,27 @@ std::vector<QUuid> AssetCollection::idList() const
     return list;
 }
 
+std::vector<std::string> AssetCollection::nameList() const
+{
+    std::vector<std::string> list;
+
+    list.reserve(id_asset_map_.size());
+
+    for( auto it = id_asset_map_.begin(), eit = id_asset_map_.end(); it != eit; ++it )
+    {
+        const Entry &ent = *(it->second);
+        capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
+        Asset::Reader assetReader = fr.getRoot<Asset>();
+
+        list.emplace_back(assetReader.getName().cStr());
+
+        //list.emplace_back(it->first);
+    }
+
+    return list;
+
+}
+
 //kj::ArrayPtr<const capnp::word> AssetCollection::at(int pos)
 //{
 //    const Entry &ent = *(assets_.at(pos));

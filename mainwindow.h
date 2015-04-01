@@ -7,6 +7,8 @@
 class QStandardItemModel;
 
 class BundleData;
+class AssetProviderServer;
+
 
 namespace Ui {
 class MainWindow;
@@ -31,6 +33,8 @@ private:
     QStandardItemModel *itemModel;
 
     std::unique_ptr<BundleData> bundle;
+
+    AssetProviderServer *providerServer_;
 };
 
 #endif // MAINWINDOW_H

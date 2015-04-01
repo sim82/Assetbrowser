@@ -14,6 +14,7 @@
 #include "elementviewdelegate.h"
 #include "assetcollection.h"
 #include "assetcollectionitemmodel.h"
+#include "assetproviderserver.h"
 
 enum class pixel_format_type : uint32_t {
     RGBA,
@@ -66,22 +67,6 @@ private:
 
 };
 
-const char *mimetypeToQtImageType(const char *mimetype)
-{
-    std::string s(mimetype);
-
-    if( mimetype == "image/png")
-    {
-        return "PNG";
-    }
-    else if( mimetype == "image/jpeg" )
-    {
-        return "JPEG";
-    }
-
-    return nullptr;
-}
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -120,6 +105,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->listView->setIconSize(QSize(128, 128));
 
 
+    providerServer_ = new AssetProviderServer( *ac, this );
+    providerServer_->start();
 #if 0
     bundle = std::make_unique<BundleData>();
     capnp::ReaderOptions readerOptions;

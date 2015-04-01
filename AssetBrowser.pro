@@ -9,7 +9,7 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = AssetBrowser
-LIBS += -lcapnp -lkj
+LIBS += -lcapnp -lcapnp-rpc -lkj -lkj-async
 TEMPLATE = app
 QMAKE_CXXFLAGS += -std=c++14
 QMAKE_EXT_CPP += .c++
@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     elementviewdelegate.cpp \
     assetcollection.cpp \
     assetcollectionitemmodel.cpp \
-    assetcollectionpreviewcache.cpp
+    assetcollectionpreviewcache.cpp \
+    assetproviderserver.cpp
 
 HEADERS  += mainwindow.h \
     assetbrowserelement.h \
@@ -31,7 +32,8 @@ HEADERS  += mainwindow.h \
     elementviewdelegate.h \
     assetcollection.h \
     assetcollectionitemmodel.h \
-    assetcollectionpreviewcache.h
+    assetcollectionpreviewcache.h \
+    assetproviderserver.h
 
 FORMS    += mainwindow.ui \
     assetbrowserelement.ui \
