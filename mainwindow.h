@@ -8,7 +8,7 @@ class QStandardItemModel;
 
 class BundleData;
 class AssetProviderServer;
-
+class AssetCollection;
 
 namespace Ui {
 class MainWindow;
@@ -27,13 +27,15 @@ private slots:
 
     void on_listView_activated(const QModelIndex &index);
 
+    void on_listView_doubleClicked(const QModelIndex &index);
+
 private:
     Ui::MainWindow *ui;
     FlowLayout *flowLayout;
     QStandardItemModel *itemModel;
 
     std::unique_ptr<BundleData> bundle;
-
+    AssetCollection * ac;
     AssetProviderServer *providerServer_;
 };
 

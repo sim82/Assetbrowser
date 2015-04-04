@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     assetcollection.cpp \
     assetcollectionitemmodel.cpp \
     assetcollectionpreviewcache.cpp \
-    assetproviderserver.cpp
+    assetproviderserver.cpp \
+    assetpreviewdialog.cpp
 
 HEADERS  += mainwindow.h \
     assetbrowserelement.h \
@@ -33,11 +34,13 @@ HEADERS  += mainwindow.h \
     assetcollection.h \
     assetcollectionitemmodel.h \
     assetcollectionpreviewcache.h \
-    assetproviderserver.h
+    assetproviderserver.h \
+    assetpreviewdialog.h
 
 FORMS    += mainwindow.ui \
     assetbrowserelement.ui \
-    browsercontent.ui
+    browsercontent.ui \
+    assetpreviewdialog.ui
 
 RESOURCES += \
     resources.qrc

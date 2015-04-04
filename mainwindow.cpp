@@ -15,6 +15,7 @@
 #include "assetcollection.h"
 #include "assetcollectionitemmodel.h"
 #include "assetproviderserver.h"
+#include <assetpreviewdialog.h>
 
 enum class pixel_format_type : uint32_t {
     RGBA,
@@ -94,7 +95,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //ui->listView->setItemDelegate(new QStyledItemDelegate());
 
-    AssetCollection * ac = new AssetCollection("/home/sim/src_3dyne/dd_081131_exec/assets/", this);
+    ac = new AssetCollection("/home/sim/src_3dyne/dd_081131_exec/assets/", this);
     ac->fullRescan();
 
     AssetCollectionPreviewCache *acpc = new AssetCollectionPreviewCache( *ac, this );
@@ -298,4 +299,32 @@ void MainWindow::on_horizontalSlider_actionTriggered(int action)
 void MainWindow::on_listView_activated(const QModelIndex &index)
 {
 
+}
+
+void MainWindow::on_listView_doubleClicked(const QModelIndex &index)
+{
+    QUuid id = index.data(ElementViewDelegate::RawDataRole).toUuid();
+    const AssetCollection::Entry &ent = ac->entry(id);
+
+    capnp::ReaderOptions readerOptions;
+    //readerOptions.traversalLimitInWords = 1024 * 1024 * 1024;
+    capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
+    Asset::Reader assetReader = fr.getRoot<Asset>();
+
+    capnp::MallocMessageBuilder builder;
+    Asset::Builder assetBuilder = builder.initRoot<Asset>();
+    bakeImpl(assetReader, assetBuilder, true);
+
+
+    AssetPreviewDialog *dialog = new AssetPreviewDialog(this);
+    dialog->initFromAsset(assetBuilder);
+
+    {
+
+        capnp::MallocMessageBuilder builder;
+        Asset::Builder assetBuilder = builder.initRoot<Asset>();
+        bakeImpl(assetReader, assetBuilder, false);
+        dialog->initFromAsset(assetBuilder);
+    }
+    dialog->setVisible(true);
 }

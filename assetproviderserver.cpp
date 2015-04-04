@@ -69,11 +69,11 @@ static pixel_format_type toPixelFormat( QImage::Format f )
     switch( f )
     {
     case QImage::Format_RGB888:
-    case QImage::Format_RGB32:
+    //case QImage::Format_RGB32:
         return pixel_format_type::RGB;
 
-    case QImage::Format_ARGB32:
-    case QImage::Format_ARGB32_Premultiplied:
+//    case QImage::Format_ARGB32:
+//    case QImage::Format_ARGB32_Premultiplied:
     case QImage::Format_RGBA8888:
         return pixel_format_type::RGBA;
 
@@ -82,6 +82,118 @@ static pixel_format_type toPixelFormat( QImage::Format f )
 
     default:
         throw std::runtime_error( "format not implemented");
+    }
+}
+
+
+static kj::Array<capnp::byte> toBakedPixelArray( QImage::Format inType, const QImage &image )
+{
+    pixel_format_type outType = toPixelFormat(inType);
+
+    auto ps = pixelSize(outType);
+
+    std::vector<capnp::byte> tmp(ps * image.width() * image.height());
+    //kj::ArrayPtr<capnp::byte> outBuf = kj::heapArray( tmp.data(), tmp.size() );
+   // tmp.clear();
+
+    auto outIt = tmp.begin(); //outBuf.begin();
+
+    int bps = image.bytesPerLine();
+
+    if( ps * image.width() != bps )
+    {
+        throw std::runtime_error( "internal error: inconsistent QImage pixel size");
+    }
+
+    for( int h = 0; h < image.height(); ++h )
+    {
+        const uchar *scanline = image.scanLine(h);
+        outIt = std::copy(scanline, scanline + bps, outIt);
+    }
+//        return std::move(outBuf);
+
+    return kj::heapArray( tmp.data(), tmp.size() );
+}
+
+void bakeImpl(Asset::Reader assetReader, Asset::Builder assetBuilder, bool smooth )
+{
+    AssetPixelDataStored::Reader storedReader = assetReader.getPixelData().getStored();
+
+    const uchar *data = storedReader.getData().begin();
+    const uint len = storedReader.getData().size();
+
+    assetBuilder.setGuid(assetReader.getGuid());
+    assetBuilder.setName(assetReader.getName());
+
+    const char *dbgName = assetReader.getName().cStr();
+
+    AssetPixelDataCooked::Builder cookedBuilder = assetBuilder.initPixelData().initCooked();
+
+//        QPixmap pixmap;
+//        pixmap.loadFromData(data, len, mimetypeToQtImageType(storedReader.getMimeType().begin()));
+
+    QImage image;
+    image.loadFromData(data, len, mimetypeToQtImageType(storedReader.getMimeType().begin()));
+    auto inType = image.format();
+    if( inType == QImage::Format_Invalid )
+    {
+        throw std::runtime_error("invalid image format");
+    }
+
+    if( inType == QImage::Format_RGB32 )
+    {
+        image = image.convertToFormat(QImage::Format_RGB888);
+    }
+    else if( inType == QImage::Format_ARGB32 || inType == QImage::Format_ARGB32_Premultiplied)
+    {
+        image = image.convertToFormat(QImage::Format_RGBA8888);
+    }
+
+    QSize size = image.size();
+    int numMipmaps = 1;
+
+    while( size.width() > 4 && size.height() > 4 )
+    {
+        ++numMipmaps;
+        size /= 2;
+    }
+
+    cookedBuilder.initLevels(numMipmaps);
+    cookedBuilder.initLevelData(numMipmaps);
+
+    size = image.size();
+    for( int i = 0; i < numMipmaps; ++i )
+    {
+        cookedBuilder.getLevels()[i].setWidth(size.width());
+        cookedBuilder.getLevels()[i].setHeight(size.height());
+
+        pixel_format_type pixelFormat = toPixelFormat(image.format());
+        if( i == 0 )
+        {
+            cookedBuilder.setPixelFormat( uint32_t(pixelFormat));
+        }
+
+        QImage outImage;
+        if( i == 0 )
+        {
+            outImage = image;
+        }
+        else {
+            auto quality = smooth ? Qt::SmoothTransformation : Qt::FastTransformation;
+            outImage = image.scaled(size, Qt::IgnoreAspectRatio, quality);
+            auto format = outImage.format();
+            if( format == QImage::Format_RGB32 )
+            {
+                outImage = outImage.convertToFormat(QImage::Format_RGB888);
+            }
+            else if( format == QImage::Format_ARGB32 || format == QImage::Format_ARGB32_Premultiplied)
+            {
+                outImage = outImage.convertToFormat(QImage::Format_RGBA8888);
+            }
+        }
+        auto array = toBakedPixelArray(outImage.format(), outImage);
+        cookedBuilder.getLevelData().set(i, std::move(array));
+        size /= 2;
     }
 }
 
@@ -110,7 +222,32 @@ public:
 
 //        return kj::READY_NOW;
         try {
-            return bakeImpl(ent_, context);
+            capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent_.mappedData, ent_.file.size() / sizeof(capnp::word)));
+            Asset::Reader assetReader = fr.getRoot<Asset>();
+
+            if( !assetReader.hasPixelData() )
+            {
+                return kj::NEVER_DONE;
+            }
+            if( assetReader.getPixelData().hasCooked() )
+            {
+                // if it is already baked, just copy
+
+                context.getResults().setBaked(assetReader);
+                return kj::READY_NOW;
+            }
+
+            if( !assetReader.getPixelData().hasStored() )
+            {
+                return kj::NEVER_DONE;
+            }
+            capnp::MallocMessageBuilder builder;
+            Asset::Builder assetBuilder = builder.initRoot<Asset>();
+
+            bakeImpl(assetReader, assetBuilder);
+            context.getResults().setBaked(assetBuilder);
+
+            return kj::READY_NOW;
         } catch( std::runtime_error x )
         {
             std::cout << "bake error: " << x.what() << std::endl;
@@ -124,128 +261,6 @@ public:
     }
 
 private:
-
-    kj::ArrayPtr<capnp::byte> toBakedPixelArray( QImage::Format inType, const QImage &image )
-    {
-        pixel_format_type outType = toPixelFormat(inType);
-
-        auto ps = pixelSize(outType);
-
-        std::vector<capnp::byte> tmp(ps * image.width() * image.height());
-        //kj::ArrayPtr<capnp::byte> outBuf = kj::heapArray( tmp.data(), tmp.size() );
-       // tmp.clear();
-
-        auto outIt = tmp.begin(); //outBuf.begin();
-
-        if( inType == QImage::Format_RGB32 || inType == QImage::Format_ARGB32 || inType == QImage::Format_ARGB32_Premultiplied )
-        {
-            for( int h = 0; h < image.height(); ++h )
-            {
-                QRgb *scanline = (QRgb*) image.scanLine(h);
-                for( int w = 0; w < image.width(); ++w )
-                {
-                    *outIt++ = qRed(scanline[w]);
-                    *outIt++ = qGreen(scanline[w]);
-                    *outIt++ = qBlue(scanline[w]);
-
-                    if( ps == 4 )
-                    {
-                        *outIt++ = qAlpha(scanline[w]);
-                    }
-                }
-            }
-        }
-        else if( inType == QImage::Format_Indexed8 )
-        {
-            for( int h = 0; h < image.height(); ++h )
-            {
-                const uchar *scanline = image.scanLine(h);
-                for( int w = 0; w < image.width(); ++w )
-                {
-                    *outIt++ = scanline[w];
-                }
-            }
-        }
-        else
-        {
-            throw std::runtime_error( "format not implemented");
-        }
-//        return std::move(outBuf);
-
-        return kj::heapArray( tmp.data(), tmp.size() );
-    }
-
-    kj::Promise<void>bakeImpl(const AssetCollection::Entry &ent, GetBakedContext context )
-    {
-        capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
-        Asset::Reader assetReader = fr.getRoot<Asset>();
-
-        if( !assetReader.hasPixelData() )
-        {
-            return kj::NEVER_DONE;
-        }
-        if( assetReader.getPixelData().hasCooked() )
-        {
-            // if it is already baked, just copy
-
-            context.getResults().setBaked(assetReader);
-            return kj::READY_NOW;
-        }
-
-        if( !assetReader.getPixelData().hasStored() )
-        {
-            return kj::NEVER_DONE;
-        }
-        AssetPixelDataStored::Reader storedReader = assetReader.getPixelData().getStored();
-
-        const uchar *data = storedReader.getData().begin();
-        const uint len = storedReader.getData().size();
-
-        capnp::MallocMessageBuilder builder;
-        Asset::Builder assetBuilder = builder.initRoot<Asset>();
-        assetBuilder.setGuid(assetReader.getGuid());
-        assetBuilder.setName(assetReader.getName());
-
-        const char *dbgName = assetReader.getName().cStr();
-
-        AssetPixelDataCooked::Builder cookedBuilder = assetBuilder.initPixelData().initCooked();
-
-        QPixmap pixmap;
-        pixmap.loadFromData(data, len, mimetypeToQtImageType(storedReader.getMimeType().begin()));
-
-        QSize size = pixmap.size();
-        int numMipmaps = 1;
-
-        while( size.width() > 4 && size.height() > 4 )
-        {
-            ++numMipmaps;
-            size /= 2;
-        }
-
-        cookedBuilder.initLevels(numMipmaps);
-        cookedBuilder.initLevelData(numMipmaps);
-
-        for( int i = 0; i < numMipmaps; ++i )
-        {
-            QSize size = pixmap.size();
-
-            cookedBuilder.getLevels()[i].setWidth(size.width());
-            cookedBuilder.getLevels()[i].setHeight(size.height());
-
-            QImage image(pixmap.toImage());
-            pixel_format_type pixelFormat = toPixelFormat(image.format());
-            if( i == 0 )
-            {
-                cookedBuilder.setPixelFormat( uint32_t(pixelFormat));
-            }
-
-            cookedBuilder.getLevelData().set(i, toBakedPixelArray(image.format(), image));
-            size /= 2;
-            image = image.scaled(size);
-        }
-
-        return kj::READY_NOW;
-    }
 
     const AssetCollection::Entry &ent_;
 };
@@ -359,7 +374,7 @@ AssetProviderServer::~AssetProviderServer()
 
 void AssetProviderServer::run()
 {
-    capnp::EzRpcServer server("*", 12345);
+    capnp::EzRpcServer server("127.0.0.1", 12345);
 
     auto &waitScope = server.getWaitScope();
 
