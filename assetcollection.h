@@ -10,18 +10,27 @@
 #include <vector>
 #include <map>
 #include <QUuid>
+#include <unordered_map>
+
 class AssetCollection : public QObject
 {
     Q_OBJECT
 public:
+    struct Entry;
+    typedef std::multimap<qint64,Entry *> LruQueueType;
+
     struct Entry {
         Entry( QString const & filename );
 
         QString filename;
         QByteArray data;
         QFile file;
-        uchar const * mappedData;
+        uchar * mappedData;
 
+        LruQueueType::iterator lruQueueIt;
+
+        void map();
+        void unmap();
     };
 
     explicit AssetCollection(const char *path, QObject *parent = 0);
@@ -31,16 +40,18 @@ public:
 //    kj::ArrayPtr<const capnp::word> at(int pos);
 
 //    const AssetCollection::Entry &entryAt(int pos) const;
-    const AssetCollection::Entry &entry(QUuid const& id) const;
+    const AssetCollection::Entry &entry(QUuid const& id);
 
     std::vector<QUuid> idList() const;
-    std::vector<std::string> nameList() const;
+    std::vector<std::string> nameList();
 signals:
 
 public slots:
     void fullRescan();
 
 private:
+    void cacheIn(Entry *ent);
+
 //    QString path_;
     QDir baseDir_;
 
@@ -49,6 +60,13 @@ private:
 //    std::vector<std::unique_ptr<Entry>> assets_;
 
     std::map<QUuid, std::unique_ptr<Entry>> id_asset_map_;
+    typedef std::map<QUuid, std::unique_ptr<Entry>> IdAssetMapType;
+
+
+    LruQueueType lruQueue_;
+
+//    std::unordered_map<Entry*, LruQueueType::iterator> lruMap_;
+
 };
 
 #endif // ASSETCOLLECTION_H

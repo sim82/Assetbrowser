@@ -311,14 +311,23 @@ void MainWindow::on_listView_doubleClicked(const QModelIndex &index)
     capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
     Asset::Reader assetReader = fr.getRoot<Asset>();
 
+    AssetPreviewDialog *dialog = new AssetPreviewDialog(this);
+
     capnp::MallocMessageBuilder builder;
     Asset::Builder assetBuilder = builder.initRoot<Asset>();
     bakeImpl(assetReader, assetBuilder, true);
-
-
-    AssetPreviewDialog *dialog = new AssetPreviewDialog(this);
     dialog->initFromAsset(assetBuilder);
 
+
+
+
+//    if( assetReader.hasPixelData() && assetReader.getPixelData().hasStored())
+//    {
+//        QImage refImage;
+//        capnp::Data::Reader data = assetReader.getPixelData().getStored().getData();
+//        refImage.loadFromData(data.begin(), data.size());
+//        dialog->initFromImage(refImage);
+//    }
     {
 
         capnp::MallocMessageBuilder builder;
@@ -326,5 +335,6 @@ void MainWindow::on_listView_doubleClicked(const QModelIndex &index)
         bakeImpl(assetReader, assetBuilder, false);
         dialog->initFromAsset(assetBuilder);
     }
+    dialog->setAttribute( Qt::WA_DeleteOnClose, true );
     dialog->setVisible(true);
 }

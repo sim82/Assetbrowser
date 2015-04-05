@@ -11,6 +11,9 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = AssetBrowser
 LIBS += -lcapnp -lcapnp-rpc -lkj -lkj-async
 TEMPLATE = app
+#QMAKE_CXXFLAGS += -std=c++14 -fsanitize=address
+#QMAKE_LFLAGS += -fsanitize=address
+
 QMAKE_CXXFLAGS += -std=c++14
 QMAKE_EXT_CPP += .c++
 SOURCES += main.cpp\

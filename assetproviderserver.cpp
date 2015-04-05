@@ -100,15 +100,16 @@ static kj::Array<capnp::byte> toBakedPixelArray( QImage::Format inType, const QI
 
     int bps = image.bytesPerLine();
 
-    if( ps * image.width() != bps )
+    if( ps * image.width() > bps )
     {
         throw std::runtime_error( "internal error: inconsistent QImage pixel size");
     }
 
     for( int h = 0; h < image.height(); ++h )
     {
-        const uchar *scanline = image.scanLine(h);
-        outIt = std::copy(scanline, scanline + bps, outIt);
+        const uchar *scanline = image.constScanLine(h);
+        auto lineSize = ps * image.width();
+        outIt = std::copy(scanline, scanline + lineSize, outIt);
     }
 //        return std::move(outBuf);
 
@@ -118,6 +119,11 @@ static kj::Array<capnp::byte> toBakedPixelArray( QImage::Format inType, const QI
 void bakeImpl(Asset::Reader assetReader, Asset::Builder assetBuilder, bool smooth )
 {
     AssetPixelDataStored::Reader storedReader = assetReader.getPixelData().getStored();
+
+    if( !storedReader.hasData())
+    {
+        throw std::runtime_error("cannot get data form stored asset");
+    }
 
     const uchar *data = storedReader.getData().begin();
     const uint len = storedReader.getData().size();
@@ -133,7 +139,7 @@ void bakeImpl(Asset::Reader assetReader, Asset::Builder assetBuilder, bool smoot
 //        pixmap.loadFromData(data, len, mimetypeToQtImageType(storedReader.getMimeType().begin()));
 
     QImage image;
-    image.loadFromData(data, len, mimetypeToQtImageType(storedReader.getMimeType().begin()));
+    image.loadFromData(data, len/*, mimetypeToQtImageType(storedReader.getMimeType().begin())*/);
     auto inType = image.format();
     if( inType == QImage::Format_Invalid )
     {
@@ -179,19 +185,38 @@ void bakeImpl(Asset::Reader assetReader, Asset::Builder assetBuilder, bool smoot
             outImage = image;
         }
         else {
-            auto quality = smooth ? Qt::SmoothTransformation : Qt::FastTransformation;
+            auto quality = (smooth && image.format() !=QImage::Format_Indexed8) ? Qt::SmoothTransformation : Qt::FastTransformation;
             outImage = image.scaled(size, Qt::IgnoreAspectRatio, quality);
             auto format = outImage.format();
-            if( format == QImage::Format_RGB32 )
-            {
-                outImage = outImage.convertToFormat(QImage::Format_RGB888);
+            if( format != image.format()) {
+//                QImage xxx = outImage.convertToFormat(image.format());
+//                if( xxx.format() != image.format() )
+//                {
+//                    throw std::runtime_error("convertToFormat failed");
+//                }
+
+                outImage = outImage.convertToFormat(image.format());
+
+
             }
-            else if( format == QImage::Format_ARGB32 || format == QImage::Format_ARGB32_Premultiplied)
-            {
-                outImage = outImage.convertToFormat(QImage::Format_RGBA8888);
-            }
+
+//            if( format == QImage::Format_RGB32 )
+//            {
+
+//            }
+//            else if( format == QImage::Format_ARGB32 || format == QImage::Format_ARGB32_Premultiplied)
+//            {
+//                outImage = outImage.convertToFormat(QImage::Format_RGBA8888);
+//            }
         }
-        auto array = toBakedPixelArray(outImage.format(), outImage);
+        QImage::Format outFormat = outImage.format();
+
+        if( outFormat != image.format() )
+        {
+            throw std::runtime_error("convertToFormat failed");
+        }
+
+        auto array = toBakedPixelArray(outFormat, outImage);
         cookedBuilder.getLevelData().set(i, std::move(array));
         size /= 2;
     }

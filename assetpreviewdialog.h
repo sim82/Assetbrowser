@@ -5,6 +5,7 @@
 #include "asset.capnp.h"
 
 class QGraphicsScene;
+class QGraphicsPixmapItem;
 
 namespace Ui {
 class AssetPreviewDialog;
@@ -19,6 +20,7 @@ public:
     ~AssetPreviewDialog();
 
     void initFromAsset(Asset::Reader reader);
+    void initFromImage(const QImage &image);
 private slots:
     void on_horizontalSlider_sliderMoved(int position);
 
@@ -26,6 +28,7 @@ private:
     Ui::AssetPreviewDialog *ui;
     QGraphicsScene *scene;
     qreal xoffset;
+    std::vector<QGraphicsPixmapItem *> pixmapItems;
 };
 
 #endif // ASSETPREVIEWDIALOG_H

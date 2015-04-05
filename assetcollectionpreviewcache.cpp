@@ -6,6 +6,7 @@
 AssetCollectionPreviewCache::AssetCollectionPreviewCache(AssetCollection & collection, QObject *parent)
     : QObject(parent)
     , collection_(collection)
+    , previewIcon( ":res/cross.png")
 {
 
 }
@@ -52,7 +53,7 @@ bool AssetCollectionPreviewCache::request(const QUuid &id)
     {
         return true;
     }
-
+#if 0
     auto const & ent = collection_.entry(id);
 
     capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
@@ -74,7 +75,7 @@ bool AssetCollectionPreviewCache::request(const QUuid &id)
     const uint len = storedReader.getData().size();
 
     QPixmap pixmap;
-    pixmap.loadFromData(data, len, mimetypeToQtImageType(storedReader.getMimeType().begin()));
+    pixmap.loadFromData(data, len/*, mimetypeToQtImageType(storedReader.getMimeType().begin())*/);
 
     QSize destSize = fitSize(pixmap.size(), QSize(64, 64));
 
@@ -82,6 +83,10 @@ bool AssetCollectionPreviewCache::request(const QUuid &id)
 
 
     return true;
+#else
+    cache_.emplace( id, previewIcon );
+    return true;
+#endif
 }
 
 QIcon &AssetCollectionPreviewCache::get(const QUuid &id)

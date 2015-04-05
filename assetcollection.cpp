@@ -5,6 +5,7 @@
 #include "capnp/serialize.h"
 #include <QVector>
 #include <QUuid>
+#include <QDateTime>
 
 AssetCollection::AssetCollection(const char *path, QObject *parent)
     : QObject(parent), baseDir_(path)
@@ -31,7 +32,7 @@ size_t AssetCollection::size() const
 //    return *(assets_.at(pos));
 //}
 
-const AssetCollection::Entry &AssetCollection::entry(const QUuid &id) const
+const AssetCollection::Entry &AssetCollection::entry(const QUuid &id)
 {
     auto it = id_asset_map_.find(id);
 
@@ -40,7 +41,11 @@ const AssetCollection::Entry &AssetCollection::entry(const QUuid &id) const
         throw std::runtime_error( "unknown id" );
     }
 
-    return *(it->second);
+    Entry *ent = (it->second).get();
+
+    cacheIn(ent);
+
+    return *ent;
 }
 
 std::vector<QUuid> AssetCollection::idList() const
@@ -56,7 +61,7 @@ std::vector<QUuid> AssetCollection::idList() const
     return list;
 }
 
-std::vector<std::string> AssetCollection::nameList() const
+std::vector<std::string> AssetCollection::nameList()
 {
     std::vector<std::string> list;
 
@@ -64,8 +69,9 @@ std::vector<std::string> AssetCollection::nameList() const
 
     for( auto it = id_asset_map_.begin(), eit = id_asset_map_.end(); it != eit; ++it )
     {
-        const Entry &ent = *(it->second);
-        capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
+        Entry *ent = (it->second).get();
+        cacheIn(ent);
+        capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent->mappedData, ent->file.size() / sizeof(capnp::word)));
         Asset::Reader assetReader = fr.getRoot<Asset>();
 
         list.emplace_back(assetReader.getName().cStr());
@@ -100,7 +106,6 @@ void AssetCollection::fullRescan()
 {
     QDirIterator it(baseDir_.absolutePath(), QStringList() << "*.asset", QDir::Files, QDirIterator::Subdirectories);
 
-    size_t i = 0;
     while(it.hasNext())
     {
 
@@ -138,7 +143,56 @@ void AssetCollection::fullRescan()
         std::cout << "uuid: " << uuid.toString().toStdString() << "\n";
 
         id_asset_map_.emplace(uuid, std::make_unique<Entry>(file.fileName()));
+    }
+}
 
+void AssetCollection::cacheIn(AssetCollection::Entry *ent)
+{
+    if(ent->mappedData != nullptr)
+    {
+        // already mapped -> move back in lru
+//        auto lruMapIt = lruMap_.find(ent);
+//        if( lruMapIt == lruMap_.end())
+//        {
+//            throw std::runtime_error( "lru inconsistent: mapped but not in queue" );
+//        }
+        if( ent->lruQueueIt->second != ent )
+        {
+            throw std::runtime_error( "lru inconsistent: wrong ent in queue" );
+        }
+
+        std::cout << "= " << (QDateTime::currentMSecsSinceEpoch()-ent->lruQueueIt->first) << " " << ent << std::endl;
+        lruQueue_.erase(ent->lruQueueIt);
+
+        ent->lruQueueIt = lruQueue_.emplace(QDateTime::currentMSecsSinceEpoch(), ent);
+    }
+    else
+    {
+        // not mapped
+
+        // first check if we have to drop old entry from the cache
+        const size_t LruThreshold = 128;
+        if( lruQueue_.size() > LruThreshold )
+        {
+            auto lruQueueIt = lruQueue_.begin();
+            Entry *uncacheEnt = lruQueueIt->second;
+            if( uncacheEnt->mappedData == nullptr )
+            {
+                throw std::runtime_error( "lru inconsistent: unmapped entry in queue" );
+            }
+            std::cout << "- " << (QDateTime::currentMSecsSinceEpoch()-lruQueueIt->first) << " " << ent << std::endl;
+
+            uncacheEnt->unmap();
+            lruQueue_.erase(lruQueueIt);
+            ent->lruQueueIt = lruQueue_.end();
+
+        }
+
+        // second: map entry and put into lru queue
+        ent->map();
+
+        ent->lruQueueIt = lruQueue_.emplace(QDateTime::currentMSecsSinceEpoch(), ent);
+        std::cout << "+ " << ent << std::endl;
     }
 }
 
@@ -147,10 +201,30 @@ void AssetCollection::fullRescan()
 AssetCollection::Entry::Entry(const QString &filenameX)
     : filename(filenameX)
     , file(filename)
+    , mappedData(nullptr)
 {
-    file.open(QFile::ReadOnly);
   // data = file.readAll();
 
-    mappedData = file.map(0, file.size());
+//    mappedData = file.map(0, file.size());
+//    file.close();
+}
 
+void AssetCollection::Entry::map()
+{
+    if( mappedData == nullptr )
+    {
+        file.open(QFile::ReadOnly);
+
+        mappedData = file.map(0, file.size());
+        file.close();
+    }
+}
+
+void AssetCollection::Entry::unmap()
+{
+    if( mappedData != nullptr)
+    {
+        file.unmap(mappedData);
+        mappedData = nullptr;
+    }
 }

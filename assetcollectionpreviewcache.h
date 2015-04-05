@@ -21,6 +21,7 @@ signals:
 public slots:
 
 private:
+    QIcon previewIcon;
     AssetCollection & collection_;
     std::map<QUuid, QIcon> cache_;
 };
