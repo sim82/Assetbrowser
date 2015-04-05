@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/res">
         <file>cross.png</file>
+        <file>replacement.png</file>
     </qresource>
     <qresource prefix="/"/>
     <qresource prefix="/qss">

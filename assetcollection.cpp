@@ -140,7 +140,7 @@ void AssetCollection::fullRescan()
 
         QUuid uuid(assetReader.getGuid().cStr());
 
-        std::cout << "uuid: " << uuid.toString().toStdString() << "\n";
+//        std::cout << "uuid: " << uuid.toString().toStdString() << "\n";
 
         id_asset_map_.emplace(uuid, std::make_unique<Entry>(file.fileName()));
     }

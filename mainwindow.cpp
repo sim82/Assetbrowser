@@ -73,8 +73,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
 
+    ac = new AssetCollection("/home/sim/src_3dyne/dd_081131_exec/assets/", this);
+    ac->fullRescan();
 
+    previewCache = new AssetCollectionPreviewCache( *ac, this );
+    previewCache->setObjectName("previewCache");
+
+    // must be called after initilizing previewCache for signal/slot auto-connect.
     ui->setupUi(this);
+
 
     //flowLayout = new FlowLayout(ui->scrollArea);
     //ui->scrollArea->setWidget(flowLayout->widget());
@@ -85,22 +92,19 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->scrollArea->setVisible(false);
     ui->listWidget->setVisible(false);
 #endif
-    itemModel = new AssetCollectionItemModel();
+    itemModel = new QStandardItemModel(ui->listView);
     ui->listView->setModel(itemModel);
     ui->listView->setAcceptDrops(true);
     ui->listView->setDragEnabled(true);
     ui->listView->setDropIndicatorShown(true);
     ui->listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
+//    connect(itemModel, SIGNAL(itemChanged(QStandardItem*)), ui->listView, SLOT(updatePanel(QStandardItem*)));
 
     //ui->listView->setItemDelegate(new QStyledItemDelegate());
 
-    ac = new AssetCollection("/home/sim/src_3dyne/dd_081131_exec/assets/", this);
-    ac->fullRescan();
 
-    AssetCollectionPreviewCache *acpc = new AssetCollectionPreviewCache( *ac, this );
-
-    ui->listView->setItemDelegate(new ElementViewDelegate(*acpc));
+    ui->listView->setItemDelegate(new ElementViewDelegate(*previewCache));
     ui->listView->setViewMode(QListView::IconMode);
     ui->listView->setResizeMode(QListView::Adjust);
     ui->listView->setIconSize(QSize(128, 128));
@@ -201,7 +205,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 #else
 
-
+    QIcon defaultIcon(":res/replacement.png");
     auto const& uuids = ac->idList();
     for( size_t i = 0; i < uuids.size(); ++i )
     {
@@ -259,7 +263,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
         item->setData( uuids[i], ElementViewDelegate::RawDataRole);
+        item->setData( defaultIcon, ElementViewDelegate::IconRole);
 //        item->setData( title, ElementViewDelegate::headerTextRole);
+        idToRowMap.insert(uuids[i], itemModel->rowCount());
         itemModel->appendRow(item);
 #endif
     }
@@ -337,4 +343,26 @@ void MainWindow::on_listView_doubleClicked(const QModelIndex &index)
     }
     dialog->setAttribute( Qt::WA_DeleteOnClose, true );
     dialog->setVisible(true);
+}
+
+void MainWindow::on_previewCache_previewIconsChanged(QSet<QUuid> ids)
+{
+    for( auto it = ids.begin(), eit = ids.end(); it != eit; ++it )
+    {
+//        std::cout << "preview changed: " << (*it).toString().toStdString() << std::endl;
+        auto idIt = idToRowMap.find(*it);
+        if( idIt == idToRowMap.end() )
+        {
+            throw std::runtime_error( "no known model row for id");
+        }
+
+        QModelIndex index = itemModel->index(idIt.value(), 0);
+        itemModel->setData(index, previewCache->get(idIt.key()), ElementViewDelegate::IconRole);
+
+
+//        itemModel->item(idIt.value(), 0)->setData(previewCache->get(idIt.key()), ElementViewDelegate::IconRole);
+
+
+
+    }
 }

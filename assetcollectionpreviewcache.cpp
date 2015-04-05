@@ -2,12 +2,23 @@
 #include "assetcollection.h"
 #include <QSize>
 #include <capnp/serialize.h>
+#include <QTimer>
+#include <QDateTime>
+#include <iostream>
 
 AssetCollectionPreviewCache::AssetCollectionPreviewCache(AssetCollection & collection, QObject *parent)
     : QObject(parent)
     , collection_(collection)
     , previewIcon( ":res/cross.png")
+    , timer(new QTimer(this))
 {
+    timer->setObjectName("timer");
+    QMetaObject::connectSlotsByName(this);
+
+    timer->setInterval(100);
+    timer->setSingleShot(false);
+    timer->start();
+
 
 }
 
@@ -53,7 +64,7 @@ bool AssetCollectionPreviewCache::request(const QUuid &id)
     {
         return true;
     }
-#if 0
+#if 1
     auto const & ent = collection_.entry(id);
 
     capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
@@ -100,5 +111,74 @@ QIcon &AssetCollectionPreviewCache::get(const QUuid &id)
 
 
     return it->second;
+}
+
+void AssetCollectionPreviewCache::use(const QUuid &id)
+{
+    if( cache_.find(id) != cache_.end() )
+    {
+        return;
+    }
+
+    lifoQueue_.push(id);
+
+    if( !timer->isActive())
+    {
+        std::cout << "start load timer" << std::endl;
+        timer->start();
+    }
+
+}
+
+void AssetCollectionPreviewCache::on_timer_timeout()
+{
+    qint64 start = QDateTime::currentMSecsSinceEpoch();
+
+    QSet<QUuid> dirtyIdSet;
+
+    while( !lifoQueue_.empty() && QDateTime::currentMSecsSinceEpoch() - start < 10 )
+    {
+        QUuid id = lifoQueue_.top();
+        lifoQueue_.pop();
+
+        //std::cout << "lifo pop: " << id.toString().toStdString() << std::endl;
+
+        if( cache_.find(id) != cache_.end() )
+        {
+            continue;
+        }
+
+        auto const & ent = collection_.entry(id);
+
+        capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
+        Asset::Reader assetReader = fr.getRoot<Asset>();
+
+
+        if( !assetReader.hasPixelData() || !assetReader.getPixelData().hasStored())
+        {
+            continue;
+        }
+
+
+        AssetPixelDataStored::Reader storedReader = assetReader.getPixelData().getStored();
+        const uchar *data = storedReader.getData().begin();
+        const uint len = storedReader.getData().size();
+
+        QPixmap pixmap;
+        pixmap.loadFromData(data, len);
+
+        QSize destSize = fitSize(pixmap.size(), QSize(64, 64));
+
+        cache_.emplace( id, QIcon(pixmap.scaled(destSize.width(), destSize.height())));
+
+        dirtyIdSet.insert(id);
+    }
+
+    if( lifoQueue_.empty())
+    {
+        std::cout << "stop load timer" << std::endl;
+        timer->stop();
+    }
+    emit previewIconsChanged(dirtyIdSet);
 }
 

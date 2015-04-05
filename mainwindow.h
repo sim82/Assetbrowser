@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMap>
+#include <QUuid>
 #include <memory>
 #include "flowlayout.h"
 class QStandardItemModel;
@@ -9,6 +11,7 @@ class QStandardItemModel;
 class BundleData;
 class AssetProviderServer;
 class AssetCollection;
+class AssetCollectionPreviewCache;
 
 namespace Ui {
 class MainWindow;
@@ -29,6 +32,7 @@ private slots:
 
     void on_listView_doubleClicked(const QModelIndex &index);
 
+    void on_previewCache_previewIconsChanged(QSet<QUuid> ids);
 private:
     Ui::MainWindow *ui;
     FlowLayout *flowLayout;
@@ -37,6 +41,8 @@ private:
     std::unique_ptr<BundleData> bundle;
     AssetCollection * ac;
     AssetProviderServer *providerServer_;
+    AssetCollectionPreviewCache *previewCache;
+    QMap<QUuid, int> idToRowMap;
 };
 
 #endif // MAINWINDOW_H

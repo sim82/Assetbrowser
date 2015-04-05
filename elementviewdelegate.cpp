@@ -141,46 +141,19 @@ void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 //    }
 //    else if( !index.data(RawDataRole).isNull())
     {
+
         QUuid id = index.data(RawDataRole).toUuid();
 
-//        auto const & ent = collection_.entry(id);
+#if 0
+        cache_.request(id);
+        QIcon & icon = cache_.get(id);
 
-//        capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
-//        Asset::Reader assetReader = fr.getRoot<Asset>();
+#else
+        const QIcon& icon = qvariant_cast<QIcon>(index.data(IconRole));
+#endif
 
-
-//        if( !assetReader.hasPixelData() )
-//        {
-//            return;
-//        }
-//        if( !assetReader.getPixelData().hasStored() )
-//        {
-//            return;
-//        }
-
-
-
-
-//        AssetPixelDataStored::Reader storedReader = assetReader.getPixelData().getStored();
-//        const uchar *data = storedReader.getData().begin();
-//        const uint len = storedReader.getData().size();
-
-//        QPixmap pixmap;
-//        pixmap.loadFromData(data, len, mimetypeToQtImageType(storedReader.getMimeType().begin()));
-
-
-
-//        QString headerText = assetReader.getName().cStr();
-
-//        QRect iconRect = option.rect;
-//        iconRect.adjust(8,8, -8, -8);
-
-//        QSize size = fitSize( pixmap.size(), iconRect.size() );
-//                //    painter->drawPixmap(QRect(iconRect.left()
-//                //                              , iconRect.top()
-//                //                              , iconRect.width()
-//                //                              , iconRect.height())
-//                //                        ,pixmap);
+        QString headerText = id.toString();
+        cache_.use(id);
 
 
         QFont font = QApplication::font();
@@ -190,8 +163,6 @@ void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         SubFont.setWeight(SubFont.weight()-2);
         QFontMetrics fm(font);
 
-        cache_.request(id);
-        QIcon & icon = cache_.get(id);
 
         QRect iconBox(getIconBox());
 
@@ -220,7 +191,6 @@ void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 //        painter->setBrush(QBrush(Qt::gray));
 //        painter->drawRect(bgRect);
 
-        QString headerText = id.toString();
         painter->setPen(QPen(option.palette.windowText(), 1.0));
         painter->drawText(textRect, Qt::AlignHCenter|Qt::AlignTop|Qt::TextWrapAnywhere, headerText);
 

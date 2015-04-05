@@ -30,6 +30,7 @@ SOURCES += main.cpp\
     assetpreviewdialog.cpp
 
 HEADERS  += mainwindow.h \
+    asset.capnp.h \
     assetbrowserelement.h \
     browsercontent.h \
     flowlayout.h \

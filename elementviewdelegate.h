@@ -12,7 +12,7 @@ public:
     explicit ElementViewDelegate( AssetCollectionPreviewCache & cache );
     ~ElementViewDelegate();
 
-    enum datarole {headerTextRole = Qt::UserRole + 100,subHeaderTextrole = Qt::UserRole+101,IconRole = Qt::UserRole+102,RawDataRole = Qt::UserRole+102};
+    enum datarole {headerTextRole = Qt::UserRole + 100,subHeaderTextrole = Qt::UserRole+101,IconRole = Qt::UserRole+102,RawDataRole = Qt::UserRole+103};
 
     QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
