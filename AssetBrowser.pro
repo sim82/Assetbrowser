@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     assetcollectionitemmodel.cpp \
     assetcollectionpreviewcache.cpp \
     assetproviderserver.cpp \
-    assetpreviewdialog.cpp
+    assetpreviewdialog.cpp \
+    assetcollectionoutlinemodel.cpp
 
 HEADERS  += mainwindow.h \
     asset.capnp.h \
@@ -39,7 +40,8 @@ HEADERS  += mainwindow.h \
     assetcollectionitemmodel.h \
     assetcollectionpreviewcache.h \
     assetproviderserver.h \
-    assetpreviewdialog.h
+    assetpreviewdialog.h \
+    assetcollectionoutlinemodel.h
 
 FORMS    += mainwindow.ui \
     assetbrowserelement.ui \

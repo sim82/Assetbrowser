@@ -136,7 +136,7 @@ void AssetCollectionPreviewCache::on_timer_timeout()
 
     QSet<QUuid> dirtyIdSet;
 
-    while( !lifoQueue_.empty() && QDateTime::currentMSecsSinceEpoch() - start < 10 )
+    while( !lifoQueue_.empty() && QDateTime::currentMSecsSinceEpoch() - start < 20 )
     {
         QUuid id = lifoQueue_.top();
         lifoQueue_.pop();
@@ -164,12 +164,15 @@ void AssetCollectionPreviewCache::on_timer_timeout()
         const uchar *data = storedReader.getData().begin();
         const uint len = storedReader.getData().size();
 
-        QPixmap pixmap;
-        pixmap.loadFromData(data, len);
 
-        QSize destSize = fitSize(pixmap.size(), QSize(64, 64));
+        QImage image;
+        image.loadFromData(data, len);
 
-        cache_.emplace( id, QIcon(pixmap.scaled(destSize.width(), destSize.height())));
+        QSize destSize = fitSize(image.size(), QSize(64, 64));
+
+
+        cache_.emplace( id, QIcon(QPixmap::fromImage(image.scaled(destSize.width(), destSize.height()))));
+
 
         dirtyIdSet.insert(id);
     }

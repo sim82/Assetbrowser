@@ -44,6 +44,11 @@ public:
 
     std::vector<QUuid> idList() const;
     std::vector<std::string> nameList();
+
+    QDir baseDir() {
+        return baseDir_;
+    }
+
 signals:
 
 public slots:

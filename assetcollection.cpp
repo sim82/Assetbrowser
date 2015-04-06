@@ -112,6 +112,9 @@ void AssetCollection::fullRescan()
         const QString &filename = it.next();
         QFile file(filename);
 
+        QFileInfo fileinfo = it.fileInfo();
+        QString relativePath = baseDir_.relativeFilePath(filename);
+
         //std::cout << (i++) << " " << it.next().toStdString().c_str() << std::endl;
 
 
