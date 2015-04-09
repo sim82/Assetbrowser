@@ -73,8 +73,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->treeView->expandAll();
 
-    itemModel = new QStandardItemModel(ui->listView);
-    ui->listView->setModel(itemModel);
+//    itemModel = new QStandardItemModel(ui->listView);
+//    ui->listView->setModel(itemModel);
     ui->listView->setAcceptDrops(true);
     ui->listView->setDragEnabled(true);
     ui->listView->setDropIndicatorShown(true);
@@ -91,17 +91,30 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     QIcon defaultIcon(":res/replacement.png");
-    auto const& uuids = ac->idList();
-    for( size_t i = 0; i < uuids.size(); ++i )
+
+
+    QVector<QString> prefixList = outlineModel->prefixList();
+
+    for( auto itPrefix = prefixList.begin(), eitPrefix = prefixList.end(); itPrefix != eitPrefix; ++itPrefix )
     {
-        QStandardItem *item = new QStandardItem();
+        auto uuids = ac->idListForPrefix(*itPrefix);
 
+        QStandardItemModel *itemModel = new QStandardItemModel(ui->listView);
 
-        item->setData( uuids[i], ElementViewDelegate::RawDataRole);
-        item->setData( defaultIcon, ElementViewDelegate::IconRole);
-        idToRowMap.insert(uuids[i], itemModel->rowCount());
-        itemModel->appendRow(item);
+        itemModels.insert(*itPrefix, itemModel);
+        currentItemModel = *itPrefix;
+        ui->listView->setModel(itemModel);
+
+        for( int i = 0; i < uuids.size(); ++i )
+        {
+            QStandardItem *item = new QStandardItem();
+            item->setData( uuids[i], ElementViewDelegate::RawDataRole);
+            item->setData( defaultIcon, ElementViewDelegate::IconRole);
+            idToRowMap.insert(uuids[i], itemModel->rowCount());
+            itemModel->appendRow(item);
+        }
     }
+
 }
 
 MainWindow::~MainWindow()
@@ -159,13 +172,25 @@ void MainWindow::on_previewCache_previewIconsChanged(QSet<QUuid> ids)
             throw std::runtime_error( "no known model row for id");
         }
 
-        QModelIndex index = itemModel->index(idIt.value(), 0);
-        itemModel->setData(index, previewCache->get(idIt.key()), ElementViewDelegate::IconRole);
+        QModelIndex index = itemModels[currentItemModel]->index(idIt.value(), 0);
+        itemModels[currentItemModel]->setData(index, previewCache->get(idIt.key()), ElementViewDelegate::IconRole);
 
 
 //        itemModel->item(idIt.value(), 0)->setData(previewCache->get(idIt.key()), ElementViewDelegate::IconRole);
 
 
 
+    }
+}
+
+void MainWindow::on_treeView_doubleClicked(const QModelIndex &index)
+{
+    if( index.data(Qt::UserRole).isValid() )
+    {
+        std::cout << "clicked: " << index.data(Qt::UserRole).toString().toStdString() << std::endl;
+        currentItemModel = index.data(Qt::UserRole).toString();
+        QStandardItemModel *model = itemModels[currentItemModel];
+
+        ui->listView->setModel(model);
     }
 }

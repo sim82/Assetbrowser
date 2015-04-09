@@ -2,6 +2,7 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QStack>
+#include <iostream>
 
 #include "assetcollectionoutlinemodel.h"
 #include <assetcollection.h>
@@ -17,8 +18,27 @@ public:
         subDirs_.append(dir);
     }
 
+
+    QString initPrefix(CollectionDir *stop = nullptr)
+    {
+        CollectionDir *d = this;
+
+        while( d != stop )
+        {
+            if(!prefix_.isEmpty())
+            {
+                prefix_.prepend( "/" );
+            }
+            prefix_.prepend(d->name_);
+            d = d->parent_;
+        }
+
+        return prefix_;
+    }
+
 //private:
     QString name_;
+    QString prefix_;
     CollectionDir *parent_;
     QVector<CollectionDir *> subDirs_;
 };
@@ -66,8 +86,11 @@ void AssetCollectionOutlineModel::addCollection(AssetCollection *collection)
         QString relativeFilename = it->fileName();
         CollectionDir *nextcd = new CollectionDir(relativeFilename, top.second );
 
+        dirs.append(nextcd);
         top.second->addSubDir(nextcd);
         stack.push(std::make_pair(nextit, nextcd));
+
+        std::cout << "dir: " << nextcd->initPrefix(root).toStdString() << std::endl;
 
     }
 
@@ -126,6 +149,7 @@ QModelIndex AssetCollectionOutlineModel::parent(const QModelIndex &child) const
                     return createIndex(i, 0, dir->parent_ );
                 }
             }
+            return QModelIndex();
         }
     }
 }
@@ -157,9 +181,27 @@ QVariant AssetCollectionOutlineModel::data(const QModelIndex &index, int role) c
         QString name = dir->name_;
         return name;
     }
+    else if( role == Qt::UserRole )
+    {
+        CollectionDir *dir = reinterpret_cast<CollectionDir *>(index.internalPointer());
+
+        return dir->prefix_;
+    }
     else
     {
         return QVariant();
     }
+}
+
+QVector<QString> AssetCollectionOutlineModel::prefixList()
+{
+    QVector<QString> list;
+    for( auto it = dirs.begin(), eit = dirs.end(); it != eit; ++it )
+    {
+        list.append((*it)->prefix_);
+
+    }
+
+    return list;
 }
 

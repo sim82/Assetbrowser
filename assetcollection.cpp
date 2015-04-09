@@ -6,6 +6,8 @@
 #include <QVector>
 #include <QUuid>
 #include <QDateTime>
+#include <QSet>
+#include <QMultiMap>
 
 AssetCollection::AssetCollection(const char *path, QObject *parent)
     : QObject(parent), baseDir_(path)
@@ -56,6 +58,22 @@ std::vector<QUuid> AssetCollection::idList() const
     for( auto it = id_asset_map_.begin(), eit = id_asset_map_.end(); it != eit; ++it )
     {
         list.emplace_back(it->first);
+    }
+
+    return list;
+}
+
+QVector<QUuid> AssetCollection::idListForPrefix(const QString &prefix) const
+{
+    QVector<QUuid> list;
+
+    auto first = prefixToIdMap.lowerBound(prefix);
+    auto last = prefixToIdMap.upperBound(prefix);
+
+    while( first != last )
+    {
+        list.push_back(first.value());
+        ++first;
     }
 
     return list;
@@ -146,6 +164,27 @@ void AssetCollection::fullRescan()
 //        std::cout << "uuid: " << uuid.toString().toStdString() << "\n";
 
         id_asset_map_.emplace(uuid, std::make_unique<Entry>(file.fileName()));
+        relnameToIdMap.emplace(relativePath, uuid);
+    }
+
+    QSet<QString> prefixSet;
+    //QVector<QString> prefixSet;
+    //QMultiMap<QString
+
+
+    for( auto it = relnameToIdMap.begin(), eit = relnameToIdMap.end(); it != eit; ++it )
+    {
+        QString name = it->first;
+        int index = name.lastIndexOf('/');
+
+        if( index == -1 )
+        {
+            continue;
+        }
+        name.truncate(index);
+
+        // todo: de-duplacate prefix strings
+        prefixToIdMap.insert(name, it->second);
     }
 }
 

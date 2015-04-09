@@ -30,10 +30,14 @@ private slots:
     void on_listView_doubleClicked(const QModelIndex &index);
     void on_previewCache_previewIconsChanged(QSet<QUuid> ids);
 
+    void on_treeView_doubleClicked(const QModelIndex &index);
+
 private:
     Ui::MainWindow *ui;
     FlowLayout *flowLayout;
-    QStandardItemModel *itemModel;
+    QMap<QString, QStandardItemModel *> itemModels;
+
+    QString currentItemModel;
 
     std::unique_ptr<BundleData> bundle;
     AssetCollection * ac;

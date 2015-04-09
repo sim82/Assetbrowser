@@ -23,6 +23,7 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
 
+    QVector<QString> prefixList();
 private:
     QVector<AssetCollection *> collections;
     QVector<CollectionDir *> dirs;

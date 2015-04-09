@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <QUuid>
+#include <QMultiMap>
 #include <unordered_map>
 
 class AssetCollection : public QObject
@@ -43,6 +44,7 @@ public:
     const AssetCollection::Entry &entry(QUuid const& id);
 
     std::vector<QUuid> idList() const;
+    QVector<QUuid> idListForPrefix( const QString &prefix ) const;
     std::vector<std::string> nameList();
 
     QDir baseDir() {
@@ -65,8 +67,10 @@ private:
 //    std::vector<std::unique_ptr<Entry>> assets_;
 
     std::map<QUuid, std::unique_ptr<Entry>> id_asset_map_;
-    typedef std::map<QUuid, std::unique_ptr<Entry>> IdAssetMapType;
+    //typedef std::map<QUuid, std::unique_ptr<Entry>> IdAssetMapType;
 
+    std::map<QString, QUuid> relnameToIdMap;
+    QMultiMap<QString, QUuid> prefixToIdMap;
 
     LruQueueType lruQueue_;
 
