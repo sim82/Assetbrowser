@@ -8,9 +8,12 @@
 #include <assetcollection.h>
 class CollectionDir {
 public:
-    CollectionDir(const QString &name, CollectionDir *parent)
+    CollectionDir(const QString &name, CollectionDir *parent, AssetCollection *collection)
         : name_(name)
         , parent_(parent)
+        , collection_(collection)
+        , nonemptySubdirs(-1)
+        , emptyState(-1)
     {}
 
     void addSubDir(CollectionDir *dir)
@@ -36,11 +39,78 @@ public:
         return prefix_;
     }
 
-//private:
+    int numNonemptySubdirs()
+    {
+        if( nonemptySubdirs == -1 )
+        {
+            nonemptySubdirs = 0;
+            for( auto it = subDirs_.begin(), eit = subDirs_.end(); it != eit; ++it )
+            {
+                if(!(*it)->isEmpty())
+                {
+                    ++nonemptySubdirs;
+                }
+            }
+
+        }
+
+        return nonemptySubdirs;
+
+    }
+
+    CollectionDir *nonemptySubdir(int n)
+    {
+        int i = 0;
+        for( auto it = subDirs_.begin(), eit = subDirs_.end(); it != eit; ++it )
+        {
+            CollectionDir *dir = *it;
+            if(dir->isEmpty())
+            {
+                continue;
+            }
+
+            if(i == n)
+            {
+                return dir;
+            }
+            ++i;
+        }
+
+        throw std::runtime_error( "bad nonemptySubdir lookup");
+    }
+
+    bool isEmpty() {
+        if( emptyState == -1 )
+        {
+            emptyState = numNonemptySubdirs() == 0 && collection_->numIdsForPrefix(prefix_) == 0 ? 1 : 0;
+        }
+
+        return emptyState == 1;
+    }
+
+    CollectionDir *parent()
+    {
+        return parent_;
+    }
+
+    const QString &name()
+    {
+        return name_;
+    }
+    const QString &prefix()
+    {
+        return prefix_;
+    }
+
+private:
     QString name_;
     QString prefix_;
     CollectionDir *parent_;
+    AssetCollection *collection_;
     QVector<CollectionDir *> subDirs_;
+
+    int nonemptySubdirs;
+    int emptyState;
 };
 
 AssetCollectionOutlineModel::AssetCollectionOutlineModel(QObject *parent)
@@ -59,7 +129,7 @@ void AssetCollectionOutlineModel::addCollection(AssetCollection *collection)
     collections.append(collection);
 
     QDir baseDir = collection->baseDir();
-    CollectionDir *root = new CollectionDir(baseDir.path(), nullptr);
+    CollectionDir *root = new CollectionDir(baseDir.path(), nullptr, collection);
 
     QStack <std::pair<QDirIterator *, CollectionDir *>>stack;
 
@@ -84,7 +154,7 @@ void AssetCollectionOutlineModel::addCollection(AssetCollection *collection)
         QDirIterator *nextit = new QDirIterator(absoluteFilename, filters);
 
         QString relativeFilename = it->fileName();
-        CollectionDir *nextcd = new CollectionDir(relativeFilename, top.second );
+        CollectionDir *nextcd = new CollectionDir(relativeFilename, top.second, collection );
 
         dirs.append(nextcd);
         top.second->addSubDir(nextcd);
@@ -122,7 +192,7 @@ QModelIndex AssetCollectionOutlineModel::index(int row, int column, const QModel
     else
     {
         CollectionDir *dir = reinterpret_cast<CollectionDir *> (parent.internalPointer());
-        return createIndex(row, column, dir->subDirs_.at(row));
+        return createIndex(row, column, dir->nonemptySubdir(row));
     }
 }
 
@@ -136,17 +206,17 @@ QModelIndex AssetCollectionOutlineModel::parent(const QModelIndex &child) const
     {
         CollectionDir *dir = reinterpret_cast<CollectionDir *> (child.internalPointer());
 
-        if( dir->parent_ == nullptr )
+        if( dir->parent() == nullptr )
         {
             return QModelIndex();
         }
         else
         {
-            for( int i = 0; i < dir->parent_->subDirs_.size(); ++i )
+            for( int i = 0; i < dir->parent()->numNonemptySubdirs(); ++i )
             {
-                if( dir == dir->parent_->subDirs_[i])
+                if( dir == dir->parent()->nonemptySubdir(i))
                 {
-                    return createIndex(i, 0, dir->parent_ );
+                    return createIndex(i, 0, dir->parent() );
                 }
             }
             return QModelIndex();
@@ -162,7 +232,8 @@ int AssetCollectionOutlineModel::rowCount(const QModelIndex &parent) const
     }
     else {
         CollectionDir *dir = reinterpret_cast<CollectionDir *>(parent.internalPointer());
-        return dir->subDirs_.size();
+        //return dir->subDirs_.size();
+        return dir->numNonemptySubdirs();
     }
 }
 
@@ -178,14 +249,14 @@ QVariant AssetCollectionOutlineModel::data(const QModelIndex &index, int role) c
 
         CollectionDir *dir = reinterpret_cast<CollectionDir *>(index.internalPointer());
 
-        QString name = dir->name_;
+        QString name = dir->name();
         return name;
     }
     else if( role == Qt::UserRole )
     {
         CollectionDir *dir = reinterpret_cast<CollectionDir *>(index.internalPointer());
 
-        return dir->prefix_;
+        return dir->prefix();
     }
     else
     {
@@ -198,8 +269,14 @@ QVector<QString> AssetCollectionOutlineModel::prefixList()
     QVector<QString> list;
     for( auto it = dirs.begin(), eit = dirs.end(); it != eit; ++it )
     {
-        list.append((*it)->prefix_);
+        CollectionDir *dir = (*it);
 
+        if( dir->isEmpty())
+        {
+            continue;
+
+        }
+        list.append(dir->prefix());
     }
 
     return list;

@@ -45,6 +45,7 @@ public:
 
     std::vector<QUuid> idList() const;
     QVector<QUuid> idListForPrefix( const QString &prefix ) const;
+    int numIdsForPrefix( const QString &prefix ) const;
     std::vector<std::string> nameList();
 
     QDir baseDir() {

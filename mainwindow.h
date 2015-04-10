@@ -3,7 +3,10 @@
 
 #include <QMainWindow>
 #include <QMap>
+#include <QSet>
 #include <QUuid>
+#include <QModelIndex>
+#include <QPair>
 #include <memory>
 #include "flowlayout.h"
 class QStandardItemModel;
@@ -13,7 +16,10 @@ class AssetProviderServer;
 class AssetCollection;
 class AssetCollectionPreviewCache;
 class AssetCollectionOutlineModel;
+class ElementViewDelegate;
+
 class QFileSystemModel;
+class QTimer;
 namespace Ui {
 class MainWindow;
 }
@@ -30,10 +36,23 @@ private slots:
     void on_listView_doubleClicked(const QModelIndex &index);
     void on_previewCache_previewIconsChanged(QSet<QUuid> ids);
 
-    void on_treeView_doubleClicked(const QModelIndex &index);
+    void on_treeView_clicked(const QModelIndex &index);
+
+    void on_treeView_activated(const QModelIndex &index);
+
+    void on_treeView_pressed(const QModelIndex &index);
+
+    void on_treeView_entered(const QModelIndex &index);
+
+    void listviewScrollbar_valueChanged(int);
+
+    void on_preloadTimer_timeout();
+
+    void on_elementViewDelegate_itemPainted(QUuid id);
 
 private:
     Ui::MainWindow *ui;
+    ElementViewDelegate *elementViewDelegate;
     FlowLayout *flowLayout;
     QMap<QString, QStandardItemModel *> itemModels;
 
@@ -43,11 +62,16 @@ private:
     AssetCollection * ac;
     AssetProviderServer *providerServer_;
     AssetCollectionPreviewCache *previewCache;
-    QMap<QUuid, int> idToRowMap;
+    //QMap<QUuid, int> idToRowMap;
+
+    QMap<QUuid, QPair<int, QStandardItemModel *>> idToRowAndModelMap;
 
     QFileSystemModel *dirModel;
 
     AssetCollectionOutlineModel *outlineModel;
+
+    QTimer *preloadTimer;
+    QSet<QUuid> preloadSet;
 };
 
 #endif // MAINWINDOW_H

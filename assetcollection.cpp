@@ -79,6 +79,11 @@ QVector<QUuid> AssetCollection::idListForPrefix(const QString &prefix) const
     return list;
 }
 
+int AssetCollection::numIdsForPrefix(const QString &prefix) const
+{
+    return prefixToIdMap.count(prefix);
+}
+
 std::vector<std::string> AssetCollection::nameList()
 {
     std::vector<std::string> list;
@@ -177,11 +182,14 @@ void AssetCollection::fullRescan()
         QString name = it->first;
         int index = name.lastIndexOf('/');
 
-        if( index == -1 )
+        if( index != -1 )
         {
-            continue;
+            name.truncate(index);
         }
-        name.truncate(index);
+        else
+        {
+            name = "";
+        }
 
         // todo: de-duplacate prefix strings
         prefixToIdMap.insert(name, it->second);

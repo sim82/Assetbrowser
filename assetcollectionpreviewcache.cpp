@@ -15,7 +15,6 @@ AssetCollectionPreviewCache::AssetCollectionPreviewCache(AssetCollection & colle
     timer->setObjectName("timer");
     QMetaObject::connectSlotsByName(this);
 
-    timer->setInterval(100);
     timer->setSingleShot(false);
     timer->start();
 
@@ -125,13 +124,14 @@ void AssetCollectionPreviewCache::use(const QUuid &id)
     if( !timer->isActive())
     {
         std::cout << "start load timer" << std::endl;
-        timer->start();
+        timer->start(0);
     }
 
 }
 
 void AssetCollectionPreviewCache::on_timer_timeout()
 {
+    timer->setInterval(100);
     qint64 start = QDateTime::currentMSecsSinceEpoch();
 
     QSet<QUuid> dirtyIdSet;

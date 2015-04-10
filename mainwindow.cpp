@@ -12,6 +12,10 @@
 #include <QStyledItemDelegate>
 #include <QStandardItemModel>
 #include <QFileSystemModel>
+#include <QModelIndex>
+#include <QScrollBar>
+#include <QTimer>
+
 #include "elementviewdelegate.h"
 #include "assetcollection.h"
 #include "assetcollectionitemmodel.h"
@@ -64,6 +68,15 @@ MainWindow::MainWindow(QWidget *parent) :
     previewCache = new AssetCollectionPreviewCache( *ac, this );
     previewCache->setObjectName("previewCache");
 
+    preloadTimer = new QTimer(this);
+    preloadTimer->setObjectName("preloadTimer");
+
+    elementViewDelegate = new ElementViewDelegate(*previewCache);
+    elementViewDelegate->setObjectName("elementViewDelegate");
+    // FIXME: check why autoconnect does not work
+    QObject::connect( elementViewDelegate, SIGNAL(itemPainted(QUuid)), this, SLOT(on_elementViewDelegate_itemPainted(QUuid)));
+
+
     // must be called after initilizing previewCache for signal/slot auto-connect.
     ui->setupUi(this);
 
@@ -80,10 +93,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->listView->setDropIndicatorShown(true);
     ui->listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
-    ui->listView->setItemDelegate(new ElementViewDelegate(*previewCache));
+    ui->listView->setItemDelegate(elementViewDelegate);
     ui->listView->setViewMode(QListView::IconMode);
     ui->listView->setResizeMode(QListView::Adjust);
     ui->listView->setIconSize(QSize(128, 128));
+
+    QObject::connect(ui->listView->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(listviewScrollbar_valueChanged(int)));
 
 
     providerServer_ = new AssetProviderServer( *ac, this );
@@ -110,7 +125,7 @@ MainWindow::MainWindow(QWidget *parent) :
             QStandardItem *item = new QStandardItem();
             item->setData( uuids[i], ElementViewDelegate::RawDataRole);
             item->setData( defaultIcon, ElementViewDelegate::IconRole);
-            idToRowMap.insert(uuids[i], itemModel->rowCount());
+            idToRowAndModelMap.insert(uuids[i], qMakePair(itemModel->rowCount(), itemModel));
             itemModel->appendRow(item);
         }
     }
@@ -166,14 +181,16 @@ void MainWindow::on_previewCache_previewIconsChanged(QSet<QUuid> ids)
     for( auto it = ids.begin(), eit = ids.end(); it != eit; ++it )
     {
 //        std::cout << "preview changed: " << (*it).toString().toStdString() << std::endl;
-        auto idIt = idToRowMap.find(*it);
-        if( idIt == idToRowMap.end() )
+        auto idIt = idToRowAndModelMap.find(*it);
+        if( idIt == idToRowAndModelMap.end() )
         {
             throw std::runtime_error( "no known model row for id");
         }
 
-        QModelIndex index = itemModels[currentItemModel]->index(idIt.value(), 0);
-        itemModels[currentItemModel]->setData(index, previewCache->get(idIt.key()), ElementViewDelegate::IconRole);
+        int row = idIt.value().first;
+        QStandardItemModel *model = idIt.value().second;
+        QModelIndex index = model->index(row, 0);
+        model->setData(index, previewCache->get(idIt.key()), ElementViewDelegate::IconRole);
 
 
 //        itemModel->item(idIt.value(), 0)->setData(previewCache->get(idIt.key()), ElementViewDelegate::IconRole);
@@ -183,7 +200,17 @@ void MainWindow::on_previewCache_previewIconsChanged(QSet<QUuid> ids)
     }
 }
 
-void MainWindow::on_treeView_doubleClicked(const QModelIndex &index)
+void MainWindow::on_treeView_clicked(const QModelIndex &index)
+{
+
+}
+
+void MainWindow::on_treeView_activated(const QModelIndex &index)
+{
+
+}
+
+void MainWindow::on_treeView_pressed(const QModelIndex &index)
 {
     if( index.data(Qt::UserRole).isValid() )
     {
@@ -194,3 +221,73 @@ void MainWindow::on_treeView_doubleClicked(const QModelIndex &index)
         ui->listView->setModel(model);
     }
 }
+
+void MainWindow::on_treeView_entered(const QModelIndex &index)
+{
+
+}
+
+void MainWindow::listviewScrollbar_valueChanged(int)
+{
+
+}
+
+void MainWindow::on_preloadTimer_timeout()
+{
+    QStandardItemModel *curModel = itemModels[currentItemModel];
+
+    //QModelIndex first = ui->listView->indexAt(ui->listView->visibleRegion().)
+
+    QRegion viewRect = ui->listView->visibleRegion();
+
+    for( auto it = preloadSet.begin(), eit = preloadSet.end(); it != eit; ++it )
+    {
+        auto idIt = idToRowAndModelMap.find(*it);
+        if( idIt == idToRowAndModelMap.end() )
+        {
+            throw std::runtime_error( "no known model row for id");
+        }
+
+        QStandardItemModel *model = idIt.value().second;
+        if( model != curModel )
+        {
+            continue;
+        }
+
+        int row = idIt.value().first;
+        QModelIndex index = model->index(row, 0);
+
+        QRect rect = ui->listView->visualRect(index);
+
+
+        bool visible = viewRect.intersects(rect);
+
+        if( !visible )
+        {
+            continue;
+        }
+        previewCache->use(*it);
+//        ui->listView
+    }
+}
+
+void MainWindow::on_elementViewDelegate_itemPainted(QUuid id)
+{
+#if 1
+    if( preloadTimer->isActive() )
+    {
+        preloadTimer->stop();
+        preloadTimer->setSingleShot(true);
+    }
+    preloadTimer->start(100);
+    preloadSet.insert(id);
+#else
+    if( !preloadTimer->isActive())
+    {
+        preloadTimer->setSingleShot(true);
+        preloadTimer->start(300);
+    }
+    preloadSet.insert(id);
+#endif
+}
+

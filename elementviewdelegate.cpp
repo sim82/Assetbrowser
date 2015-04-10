@@ -153,7 +153,9 @@ void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 #endif
 
         QString headerText = id.toString();
-        cache_.use(id);
+        emit itemPainted(id);
+
+//        cache_.use(id);
 
 
         QFont font = QApplication::font();
