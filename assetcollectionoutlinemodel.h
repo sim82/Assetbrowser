@@ -26,6 +26,7 @@ public:
     QVector<QString> prefixList();
 private:
     QVector<AssetCollection *> collections;
+    QVector<CollectionDir *> rootDirs;
     QVector<CollectionDir *> dirs;
 };
 

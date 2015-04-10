@@ -28,6 +28,8 @@ public slots:
 
 private:
     QIcon previewIcon;
+    QIcon noPreviewIcon;
+
     AssetCollection & collection_;
     std::map<QUuid, QIcon> cache_;
 

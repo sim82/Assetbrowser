@@ -165,6 +165,7 @@ void AssetCollectionOutlineModel::addCollection(AssetCollection *collection)
     }
 
     dirs.append(root);
+    rootDirs.append(root);
 }
 
 QModelIndex AssetCollectionOutlineModel::index(int row, int column, const QModelIndex &parent) const
@@ -187,7 +188,7 @@ QModelIndex AssetCollectionOutlineModel::index(int row, int column, const QModel
 
     if( !parent.isValid())
     {
-        return createIndex(row, column, dirs.at(row));
+        return createIndex(row, column, rootDirs.at(row));
     }
     else
     {

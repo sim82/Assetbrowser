@@ -114,6 +114,8 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         auto uuids = ac->idListForPrefix(*itPrefix);
 
+        std::cout << "prefix: " << (*itPrefix).toStdString() << " " << uuids.size() << std::endl;
+
         QStandardItemModel *itemModel = new QStandardItemModel(ui->listView);
 
         itemModels.insert(*itPrefix, itemModel);

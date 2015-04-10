@@ -10,6 +10,7 @@ AssetCollectionPreviewCache::AssetCollectionPreviewCache(AssetCollection & colle
     : QObject(parent)
     , collection_(collection)
     , previewIcon( ":res/cross.png")
+    , noPreviewIcon( ":res/cross.png")
     , timer(new QTimer(this))
 {
     timer->setObjectName("timer");
@@ -156,6 +157,10 @@ void AssetCollectionPreviewCache::on_timer_timeout()
 
         if( !assetReader.hasPixelData() || !assetReader.getPixelData().hasStored())
         {
+            cache_.emplace( id, QIcon(noPreviewIcon));
+
+
+            dirtyIdSet.insert(id);
             continue;
         }
 
