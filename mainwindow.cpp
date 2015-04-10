@@ -240,6 +240,7 @@ void MainWindow::on_preloadTimer_timeout()
 
     QRegion viewRect = ui->listView->visibleRegion();
 
+    QMultiMap<int, QUuid> sortedIds;
     for( auto it = preloadSet.begin(), eit = preloadSet.end(); it != eit; ++it )
     {
         auto idIt = idToRowAndModelMap.find(*it);
@@ -266,8 +267,15 @@ void MainWindow::on_preloadTimer_timeout()
         {
             continue;
         }
-        previewCache->use(*it);
+        // preview cache loads them in lifo order -> insert bottom to top to make them appear from top to bottom
+        sortedIds.insert(-rect.top(), *it);
 //        ui->listView
+    }
+
+
+    for( auto it = sortedIds.begin(), eit = sortedIds.end(); it != eit; ++it )
+    {
+        previewCache->use(it.value());
     }
 }
 
