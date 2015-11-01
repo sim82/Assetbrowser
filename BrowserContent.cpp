@@ -1,4 +1,4 @@
-#include "browsercontent.h"
+#include "BrowserContent.h"
 #include "ui_browsercontent.h"
 
 BrowserContent::BrowserContent(QWidget *parent) :

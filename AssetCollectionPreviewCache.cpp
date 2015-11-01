@@ -1,10 +1,12 @@
-#include "assetcollectionpreviewcache.h"
-#include "assetcollection.h"
+#include "AssetCollectionPreviewCache.h"
+#include "AssetCollection.h"
 #include <QSize>
 #include <capnp/serialize.h>
 #include <QTimer>
 #include <QDateTime>
 #include <iostream>
+
+using namespace cp::asset;
 
 AssetCollectionPreviewCache::AssetCollectionPreviewCache(AssetCollection & collection, QObject *parent)
     : QObject(parent)

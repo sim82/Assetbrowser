@@ -1,1 +1,1 @@
-/home/sim/src_3dyne/dd_081131/build/CapNProto/asset.capnp.c++
+../dd_081131/build/CapNProto/asset.capnp.c++

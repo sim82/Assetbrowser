@@ -1,7 +1,9 @@
-#include "assetpreviewdialog.h"
+#include "AssetPreviewDialog.h"
 #include "ui_assetpreviewdialog.h"
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
+
+using namespace cp::asset;
 
 enum class pixel_format_type : uint32_t {
     RGBA,

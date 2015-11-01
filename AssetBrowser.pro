@@ -16,37 +16,43 @@ TEMPLATE = app
 
 QMAKE_CXXFLAGS += -std=c++14
 QMAKE_EXT_CPP += .c++
-SOURCES += main.cpp\
-        mainwindow.cpp\
+SOURCES +=\
         asset.capnp.c++ \
-    assetbrowserelement.cpp \
-    browsercontent.cpp \
-    flowlayout.cpp \
-    elementviewdelegate.cpp \
-    assetcollection.cpp \
-    assetcollectionitemmodel.cpp \
-    assetcollectionpreviewcache.cpp \
-    assetproviderserver.cpp \
-    assetpreviewdialog.cpp \
-    assetcollectionoutlinemodel.cpp
+    AssetProviderDialog.cpp \
+    AssetProviderServer.cpp \
+    AssetBrowserElement.cpp \
+    AssetCollection.cpp \
+    AssetCollectionItemModel.cpp \
+    AssetCollectionOutlineModel.cpp \
+    AssetCollectionPreviewCache.cpp \
+    AssetPreviewDialog.cpp \
+    BrowserContent.cpp \
+    ElementViewDelegate.cpp \
+    FlowLayout.cpp \
+    Main.cpp \
+    MainWindow.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     asset.capnp.h \
-    assetbrowserelement.h \
-    browsercontent.h \
-    flowlayout.h \
-    elementviewdelegate.h \
-    assetcollection.h \
-    assetcollectionitemmodel.h \
-    assetcollectionpreviewcache.h \
-    assetproviderserver.h \
-    assetpreviewdialog.h \
-    assetcollectionoutlinemodel.h
+    AssetProviderDialog.h \
+    AssetProviderServer.h \
+    AssetBrowserElement.h \
+    AssetCollection.h \
+    AssetCollectionItemModel.h \
+    AssetCollectionOutlineModel.h \
+    AssetCollectionPreviewCache.h \
+    AssetPreviewDialog.h \
+    BrowserContent.h \
+    ElementViewDelegate.h \
+    FlowLayout.h \
+    MainWindow.h
 
-FORMS    += mainwindow.ui \
-    assetbrowserelement.ui \
-    browsercontent.ui \
-    assetpreviewdialog.ui
+FORMS    += \
+    AssetProviderDialog.ui \
+    AssetBrowserElement.ui \
+    AssetPreviewDialog.ui \
+    BrowserContent.ui \
+    MainWindow.ui
 
 RESOURCES += \
     resources.qrc

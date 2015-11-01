@@ -4,8 +4,8 @@
 #include <QStack>
 #include <iostream>
 
-#include "assetcollectionoutlinemodel.h"
-#include <assetcollection.h>
+#include "AssetCollectionOutlineModel.h"
+#include <AssetCollection.h>
 class CollectionDir {
 public:
     CollectionDir(const QString &name, CollectionDir *parent, AssetCollection *collection)

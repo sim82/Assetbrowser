@@ -1,7 +1,7 @@
 #include <QIcon>
 #include <QApplication>
 #include <QPainter>
-#include "elementviewdelegate.h"
+#include "ElementViewDelegate.h"
 #include <capnp/serialize.h>
 
 ElementViewDelegate::ElementViewDelegate( AssetCollectionPreviewCache &cache)

@@ -21,8 +21,9 @@ public:
     typedef std::multimap<qint64,Entry *> LruQueueType;
 
     struct Entry {
-        Entry( QString const & filename );
+        Entry( QUuid const & uuid, QString const & filename );
 
+        QUuid uuid;
         QString filename;
         QByteArray data;
         QFile file;

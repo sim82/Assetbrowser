@@ -1,10 +1,11 @@
 #ifndef ASSETPROVIDERSERVER_H
 #define ASSETPROVIDERSERVER_H
-#include "assetcollection.h"
+#include "AssetCollection.h"
 #include <QThread>
 #include <asset.capnp.h>
 
-void bakeImpl(Asset::Reader assetReader, Asset::Builder assetBuilder , bool smooth = true);
+
+void bakeImpl(cp::asset::Asset::Reader assetReader, cp::asset::Asset::Builder assetBuilder , bool smooth = true);
 
 class AssetProviderServer
         : public QThread

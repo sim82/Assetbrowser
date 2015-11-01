@@ -1,4 +1,4 @@
-#include "assetcollectionitemmodel.h"
+#include "AssetCollectionItemModel.h"
 #include <iostream>
 
 AssetCollectionItemModel::AssetCollectionItemModel()

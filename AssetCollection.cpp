@@ -1,5 +1,5 @@
 #include <QDirIterator>
-#include "assetcollection.h"
+#include "AssetCollection.h"
 #include <iostream>
 #include "asset.capnp.h"
 #include "capnp/serialize.h"
@@ -8,6 +8,8 @@
 #include <QDateTime>
 #include <QSet>
 #include <QMultiMap>
+
+using namespace cp::asset;
 
 AssetCollection::AssetCollection(const char *path, QObject *parent)
     : QObject(parent), baseDir_(path)
@@ -164,11 +166,11 @@ void AssetCollection::fullRescan()
         Asset::Reader assetReader = fr.getRoot<Asset>();
 
 
-        QUuid uuid(assetReader.getGuid().cStr());
+        QUuid uuid(assetReader.getUuid().cStr());
 
 //        std::cout << "uuid: " << uuid.toString().toStdString() << "\n";
 
-        id_asset_map_.emplace(uuid, std::make_unique<Entry>(file.fileName()));
+        id_asset_map_.emplace(uuid, std::make_unique<Entry>(uuid, file.fileName()));
         relnameToIdMap.emplace(relativePath, uuid);
     }
 
@@ -248,8 +250,9 @@ void AssetCollection::cacheIn(AssetCollection::Entry *ent)
 
 
 
-AssetCollection::Entry::Entry(const QString &filenameX)
-    : filename(filenameX)
+AssetCollection::Entry::Entry(const QUuid &uuidX, const QString &filenameX)
+    : uuid(uuidX)
+    , filename(filenameX)
     , file(filename)
     , mappedData(nullptr)
 {

@@ -1,11 +1,13 @@
-#include "assetcollection.h"
-#include "assetproviderserver.h"
+#include "AssetCollection.h"
+#include "AssetProviderServer.h"
 #include "capnp/serialize.h"
 #include "capnp/ez-rpc.h"
 #include <QUuid>
 #include <QPixmap>
 #include <QRgb>
 #include <iostream>
+
+using namespace cp::asset;
 
 static const char *mimetypeToQtImageType(const char *mimetype)
 {
@@ -128,7 +130,7 @@ void bakeImpl(Asset::Reader assetReader, Asset::Builder assetBuilder, bool smoot
     const uchar *data = storedReader.getData().begin();
     const uint len = storedReader.getData().size();
 
-    assetBuilder.setGuid(assetReader.getGuid());
+    assetBuilder.setUuid(assetReader.getUuid());
     assetBuilder.setName(assetReader.getName());
 
     const char *dbgName = assetReader.getName().cStr();
@@ -223,6 +225,16 @@ void bakeImpl(Asset::Reader assetReader, Asset::Builder assetBuilder, bool smoot
 }
 
 
+class AssetProviderInvalidHandleImpl final: public AssetProvider::Handle::Server
+{
+public:
+    ::kj::Promise<void> isValid(IsValidContext context) override
+    {
+        context.getResults().setValid(false);
+        return kj::READY_NOW;
+    }
+};
+
 class AssetProviderHandleImpl final: public AssetProvider::Handle::Server
 {
 public:
@@ -231,6 +243,17 @@ public:
     {
     }
 
+    ::kj::Promise<void> isValid(IsValidContext context) override
+    {
+        context.getResults().setValid(true);
+        return kj::READY_NOW;
+    }
+
+    ::kj::Promise<void> getId(GetIdContext context) override
+    {
+        context.getResults().setUuid(ent_.uuid.toString().toUtf8().constData());
+        return kj::READY_NOW;
+    }
     ::kj::Promise<void> getAsset(GetAssetContext context) override
     {
         capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent_.mappedData, ent_.file.size() / sizeof(capnp::word)));
@@ -320,8 +343,16 @@ public:
     ::kj::Promise<void> get(GetContext context) override
     {
         auto id = context.getParams().getUuid();
-        auto &ent = collection_.entry(QUuid(id.cStr()));
-        context.getResults().setHandle(kj::heap<AssetProviderHandleImpl>(ent));
+        try
+        {
+            auto &ent = collection_.entry(QUuid(id.cStr()));
+            context.getResults().setHandle(kj::heap<AssetProviderHandleImpl>(ent));
+        }
+        catch( std::runtime_error x )
+        {
+            std::cout << "exception: " << x.what() << std::endl;
+            context.getResults().setHandle(kj::heap<AssetProviderInvalidHandleImpl>());
+        }
 
         return kj::READY_NOW;
     }
@@ -335,7 +366,8 @@ public:
 
         if( it == nameUuidMap_.end())
         {
-            return kj::NEVER_DONE;
+            context.getResults().setHandle(kj::heap<AssetProviderInvalidHandleImpl>());
+            return kj::READY_NOW;
         }
 
         auto &ent = collection_.entry(QUuid(it->second.c_str()));

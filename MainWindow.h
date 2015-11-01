@@ -8,7 +8,7 @@
 #include <QModelIndex>
 #include <QPair>
 #include <memory>
-#include "flowlayout.h"
+#include "FlowLayout.h"
 class QStandardItemModel;
 
 class BundleData;

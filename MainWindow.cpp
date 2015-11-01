@@ -1,6 +1,6 @@
-#include "mainwindow.h"
+#include "MainWindow.h"
 #include "ui_mainwindow.h"
-#include "assetbrowserelement.h"
+#include "AssetBrowserElement.h"
 #include <QFile>
 #include "capnp/serialize.h"
 #include "asset.capnp.h"
@@ -16,12 +16,14 @@
 #include <QScrollBar>
 #include <QTimer>
 
-#include "elementviewdelegate.h"
-#include "assetcollection.h"
-#include "assetcollectionitemmodel.h"
-#include "assetcollectionoutlinemodel.h"
-#include "assetproviderserver.h"
-#include <assetpreviewdialog.h>
+#include "ElementViewDelegate.h"
+#include "AssetCollection.h"
+#include "AssetCollectionItemModel.h"
+#include "AssetCollectionOutlineModel.h"
+#include "AssetProviderServer.h"
+#include <AssetPreviewDialog.h>
+
+using namespace cp::asset;
 
 enum class pixel_format_type : uint32_t {
     RGBA,

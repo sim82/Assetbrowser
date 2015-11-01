@@ -2,8 +2,8 @@
 #define ELEMENTVIEWDELEGATE_H
 
 #include <QStyledItemDelegate>
-#include "assetcollection.h"
-#include "assetcollectionpreviewcache.h"
+#include "AssetCollection.h"
+#include "AssetCollectionPreviewCache.h"
 
 class ElementViewDelegate : public QStyledItemDelegate
 {
