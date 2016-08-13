@@ -4,13 +4,14 @@
 #include <capnp/serialize.h>
 #include <QTimer>
 #include <QDateTime>
+#include <algorithm>
 #include <iostream>
+#include <cassert>
 
 using namespace cp::asset;
 
-AssetCollectionPreviewCache::AssetCollectionPreviewCache(AssetCollection & collection, QObject *parent)
+AssetCollectionPreviewCache::AssetCollectionPreviewCache(QObject *parent)
     : QObject(parent)
-    , collection_(collection)
     , previewIcon( ":res/cross.png")
     , noPreviewIcon( ":res/cross.png")
     , timer(new QTimer(this))
@@ -27,6 +28,22 @@ AssetCollectionPreviewCache::AssetCollectionPreviewCache(AssetCollection & colle
 AssetCollectionPreviewCache::~AssetCollectionPreviewCache()
 {
 
+}
+
+void AssetCollectionPreviewCache::addCollection(AssetCollection *ac)
+{
+    if( std::find(collections_.begin(), collections_.end(), ac ) != collections_.end() )
+    {
+        throw std::runtime_error( "collection already member of cache" );
+    }
+
+    auto const& ids = ac->idList();
+
+    for( auto const& id : ids )
+    {
+        auto bRes = idToCollection_.emplace( id, ac ).second;
+        assert( bRes );
+    }
 }
 
 static QSize fitSize( const QSize &src, const QSize &dest )
@@ -57,17 +74,31 @@ static const char *mimetypeToQtImageType(const char *mimetype)
     return nullptr;
 }
 
+const AssetCollection::Entry &AssetCollectionPreviewCache::findEntry(QUuid const& id )
+{
+    auto it = idToCollection_.find(id);
+    if( it == idToCollection_.end() )
+    {
+        throw std::runtime_error( "unknown id" );
+    }
+
+    auto const& collection = it->second;
+    return collection->entry(id);
+}
 
 bool AssetCollectionPreviewCache::request(const QUuid &id)
 {
-    auto it = cache_.find(id);
-
-    if( it != cache_.end() )
     {
-        return true;
+        auto it = cache_.find(id);
+
+        if( it != cache_.end() )
+        {
+            return true;
+        }
     }
 #if 1
-    auto const & ent = collection_.entry(id);
+
+    auto const & ent = findEntry(id);
 
     capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
     Asset::Reader assetReader = fr.getRoot<Asset>();
@@ -151,7 +182,7 @@ void AssetCollectionPreviewCache::on_timer_timeout()
             continue;
         }
 
-        auto const & ent = collection_.entry(id);
+        auto const & ent = findEntry(id);
 
         capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
         Asset::Reader assetReader = fr.getRoot<Asset>();

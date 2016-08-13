@@ -97,9 +97,13 @@ public:
     {
         return name_;
     }
-    const QString &prefix()
+    QString const& prefix()
     {
         return prefix_;
+    }
+    QString fullPath()
+    {
+        return collection_->baseDir().path() + "/" + prefix_;
     }
 
 private:
@@ -257,7 +261,7 @@ QVariant AssetCollectionOutlineModel::data(const QModelIndex &index, int role) c
     {
         CollectionDir *dir = reinterpret_cast<CollectionDir *>(index.internalPointer());
 
-        return dir->prefix();
+        return dir->fullPath();
     }
     else
     {
@@ -268,6 +272,7 @@ QVariant AssetCollectionOutlineModel::data(const QModelIndex &index, int role) c
 QVector<QString> AssetCollectionOutlineModel::prefixList()
 {
     QVector<QString> list;
+    //int collectionPrefix = 0;
     for( auto it = dirs.begin(), eit = dirs.end(); it != eit; ++it )
     {
         CollectionDir *dir = (*it);
@@ -277,7 +282,7 @@ QVector<QString> AssetCollectionOutlineModel::prefixList()
             continue;
 
         }
-        list.append(dir->prefix());
+        list.append(dir->fullPath());
     }
 
     return list;

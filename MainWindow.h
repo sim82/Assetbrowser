@@ -8,6 +8,7 @@
 #include <QModelIndex>
 #include <QPair>
 #include <memory>
+#include <vector>
 #include "FlowLayout.h"
 class QStandardItemModel;
 
@@ -59,7 +60,7 @@ private:
     QString currentItemModel;
 
     std::unique_ptr<BundleData> bundle;
-    AssetCollection * ac;
+    std::vector<AssetCollection *> collections_;
     AssetProviderServer *providerServer_;
     AssetCollectionPreviewCache *previewCache;
     //QMap<QUuid, int> idToRowMap;

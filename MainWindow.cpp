@@ -64,16 +64,24 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
 
-    ac = new AssetCollection("/home/sim/src_3dyne/dd_081131_exec/assets/", this);
-    ac->fullRescan();
+    collections_.push_back(new AssetCollection("/home/sim/src_3dyne/dd_081131_exec/assets/", this));
+    collections_.back()->fullRescan();
 
-    previewCache = new AssetCollectionPreviewCache( *ac, this );
+    collections_.push_back(new AssetCollection("/tmp/shadermesh_assets/", this));
+    collections_.back()->fullRescan();
+
+
+    previewCache = new AssetCollectionPreviewCache( this );
+    for( auto ac : collections_ )
+    {
+        previewCache->addCollection(ac);
+    }
     previewCache->setObjectName("previewCache");
 
     preloadTimer = new QTimer(this);
     preloadTimer->setObjectName("preloadTimer");
 
-    elementViewDelegate = new ElementViewDelegate(*previewCache);
+    elementViewDelegate = new ElementViewDelegate();
     elementViewDelegate->setObjectName("elementViewDelegate");
     // FIXME: check why autoconnect does not work
     QObject::connect( elementViewDelegate, SIGNAL(itemPainted(QUuid)), this, SLOT(on_elementViewDelegate_itemPainted(QUuid)));
@@ -83,7 +91,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     outlineModel = new AssetCollectionOutlineModel(ui->treeView);
-    outlineModel->addCollection(ac);
+    for( auto ac : collections_ )
+    {
+        outlineModel->addCollection(ac);
+    }
     ui->treeView->setModel(outlineModel);
 
     ui->treeView->expandAll();
@@ -103,7 +114,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->listView->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(listviewScrollbar_valueChanged(int)));
 
 
-    providerServer_ = new AssetProviderServer( *ac, this );
+    providerServer_ = new AssetProviderServer( *collections_.front(), this );
     providerServer_->start();
 
 
@@ -112,11 +123,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QVector<QString> prefixList = outlineModel->prefixList();
 
+
     for( auto itPrefix = prefixList.begin(), eitPrefix = prefixList.end(); itPrefix != eitPrefix; ++itPrefix )
     {
-        auto uuids = ac->idListForPrefix(*itPrefix);
 
-        std::cout << "prefix: " << (*itPrefix).toStdString() << " " << uuids.size() << std::endl;
 
         QStandardItemModel *itemModel = new QStandardItemModel(ui->listView);
 
@@ -124,15 +134,23 @@ MainWindow::MainWindow(QWidget *parent) :
         currentItemModel = *itPrefix;
         ui->listView->setModel(itemModel);
 
-        for( int i = 0; i < uuids.size(); ++i )
+
+        for( auto ac : collections_ )
         {
-            QStandardItem *item = new QStandardItem();
-            item->setData( uuids[i], ElementViewDelegate::RawDataRole);
-            item->setData( defaultIcon, ElementViewDelegate::IconRole);
-            idToRowAndModelMap.insert(uuids[i], qMakePair(itemModel->rowCount(), itemModel));
-            itemModel->appendRow(item);
+            auto uuids = ac->idListForPrefix(*itPrefix);
+            std::cout << "prefix: " << (*itPrefix).toStdString() << " " << uuids.size() << std::endl;
+
+            for( int i = 0; i < uuids.size(); ++i )
+            {
+                QStandardItem *item = new QStandardItem();
+                item->setData( uuids[i], ElementViewDelegate::RawDataRole);
+                item->setData( defaultIcon, ElementViewDelegate::IconRole);
+                idToRowAndModelMap.insert(uuids[i], qMakePair(itemModel->rowCount(), itemModel));
+                itemModel->appendRow(item);
+            }
         }
     }
+
 
 }
 
@@ -145,7 +163,7 @@ MainWindow::~MainWindow()
 void MainWindow::on_listView_doubleClicked(const QModelIndex &index)
 {
     QUuid id = index.data(ElementViewDelegate::RawDataRole).toUuid();
-    const AssetCollection::Entry &ent = ac->entry(id);
+    const AssetCollection::Entry &ent = collections_.front()->entry(id);
 
     capnp::ReaderOptions readerOptions;
     //readerOptions.traversalLimitInWords = 1024 * 1024 * 1024;

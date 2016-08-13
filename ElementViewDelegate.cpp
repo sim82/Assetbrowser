@@ -4,8 +4,7 @@
 #include "ElementViewDelegate.h"
 #include <capnp/serialize.h>
 
-ElementViewDelegate::ElementViewDelegate( AssetCollectionPreviewCache &cache)
-    : cache_(cache)
+ElementViewDelegate::ElementViewDelegate()
 {
 
 }

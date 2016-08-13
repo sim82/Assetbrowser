@@ -9,7 +9,7 @@ class ElementViewDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
-    explicit ElementViewDelegate( AssetCollectionPreviewCache & cache );
+    explicit ElementViewDelegate();
     ~ElementViewDelegate();
 
     enum datarole {headerTextRole = Qt::UserRole + 100,subHeaderTextrole = Qt::UserRole+101,IconRole = Qt::UserRole+102,RawDataRole = Qt::UserRole+103};
@@ -20,9 +20,6 @@ public:
 signals:
     void itemPainted( QUuid id ) const;
 
-private:
-    AssetCollectionPreviewCache & cache_;
-//    AssetCollection const & collection_;
 };
 
 #endif // ELEMENTVIEWDELEGATE_H

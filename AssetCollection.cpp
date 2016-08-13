@@ -8,6 +8,7 @@
 #include <QDateTime>
 #include <QSet>
 #include <QMultiMap>
+#include <cassert>
 
 using namespace cp::asset;
 
@@ -65,9 +66,28 @@ std::vector<QUuid> AssetCollection::idList() const
     return list;
 }
 
-QVector<QUuid> AssetCollection::idListForPrefix(const QString &prefix) const
+QVector<QUuid> AssetCollection::idListForPrefix(const QString &fullPath) const
 {
     QVector<QUuid> list;
+
+    // TODO: this is currently a hack: reconstruct prefix from full path. unify this!
+    QString prefix;
+    if( fullPath == baseDir_.path() + "/" )
+    {
+        prefix = "";
+    }
+    else
+    {
+        auto basePath = baseDir_.path() + "/";
+
+    //    assert( basePath.size() < fullPath.size());
+        if( basePath.size() >= fullPath.size() )
+        {
+            return list;
+        }
+        prefix = fullPath.right(fullPath.size() - basePath.size());
+    }
+
 
     auto first = prefixToIdMap.lowerBound(prefix);
     auto last = prefixToIdMap.upperBound(prefix);
@@ -99,7 +119,7 @@ std::vector<std::string> AssetCollection::nameList()
         capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent->mappedData, ent->file.size() / sizeof(capnp::word)));
         Asset::Reader assetReader = fr.getRoot<Asset>();
 
-        list.emplace_back(assetReader.getName().cStr());
+        list.emplace_back(assetReader.getHeader().getName().cStr());
 
         //list.emplace_back(it->first);
     }
@@ -129,13 +149,22 @@ std::vector<std::string> AssetCollection::nameList()
 
 void AssetCollection::fullRescan()
 {
-    QDirIterator it(baseDir_.absolutePath(), QStringList() << "*.asset", QDir::Files, QDirIterator::Subdirectories);
+    QDirIterator it(baseDir_.absolutePath(), QStringList() << "*", QDir::Files, QDirIterator::Subdirectories);
 
     while(it.hasNext())
     {
 
         const QString &filename = it.next();
+
+        if( filename.endsWith("index") )
+        {
+            continue;
+        }
+
+
         QFile file(filename);
+
+
 
         QFileInfo fileinfo = it.fileInfo();
         QString relativePath = baseDir_.relativeFilePath(filename);
@@ -166,7 +195,7 @@ void AssetCollection::fullRescan()
         Asset::Reader assetReader = fr.getRoot<Asset>();
 
 
-        QUuid uuid(assetReader.getUuid().cStr());
+        QUuid uuid(assetReader.getHeader().getUuid().cStr());
 
 //        std::cout << "uuid: " << uuid.toString().toStdString() << "\n";
 

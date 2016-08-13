@@ -18,6 +18,7 @@ QMAKE_CXXFLAGS += -std=c++14
 QMAKE_EXT_CPP += .c++
 SOURCES +=\
         asset.capnp.c++ \
+    scene.capnp.c++ \
     AssetProviderDialog.cpp \
     AssetProviderServer.cpp \
     AssetBrowserElement.cpp \
@@ -34,6 +35,7 @@ SOURCES +=\
 
 HEADERS  += \
     asset.capnp.h \
+    scene.capnp.h \
     AssetProviderDialog.h \
     AssetProviderServer.h \
     AssetBrowserElement.h \

@@ -130,10 +130,8 @@ void bakeImpl(Asset::Reader assetReader, Asset::Builder assetBuilder, bool smoot
     const uchar *data = storedReader.getData().begin();
     const uint len = storedReader.getData().size();
 
-    assetBuilder.setUuid(assetReader.getUuid());
-    assetBuilder.setName(assetReader.getName());
-
-    const char *dbgName = assetReader.getName().cStr();
+    assetBuilder.setHeader(assetReader.getHeader());
+    const char *dbgName = assetReader.getHeader().getName().cStr();
 
     AssetPixelDataCooked::Builder cookedBuilder = assetBuilder.initPixelData().initCooked();
 
