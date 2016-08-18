@@ -156,7 +156,7 @@ void AssetCollection::fullRescan()
 
         const QString &filename = it.next();
 
-        if( filename.endsWith("index") )
+        if( filename.endsWith("index") || filename.endsWith(".txt"))
         {
             continue;
         }
