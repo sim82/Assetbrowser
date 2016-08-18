@@ -1,5 +1,5 @@
 #include "MainWindow.h"
-#include "ui_mainwindow.h"
+#include "ui_MainWindow.h"
 #include "AssetBrowserElement.h"
 #include <QFile>
 #include "capnp/serialize.h"
@@ -15,7 +15,7 @@
 #include <QModelIndex>
 #include <QScrollBar>
 #include <QTimer>
-
+#include <QtQuick/QQuickWindow>
 #include "ElementViewDelegate.h"
 #include "AssetCollection.h"
 #include "AssetCollectionItemModel.h"
@@ -163,39 +163,60 @@ MainWindow::~MainWindow()
 void MainWindow::on_listView_doubleClicked(const QModelIndex &index)
 {
     QUuid id = index.data(ElementViewDelegate::RawDataRole).toUuid();
-    const AssetCollection::Entry &ent = collections_.front()->entry(id);
+
+    // HACKHACKHACK!!!
+    const AssetCollection::Entry &ent = collections_.back()->entry(id);
 
     capnp::ReaderOptions readerOptions;
     //readerOptions.traversalLimitInWords = 1024 * 1024 * 1024;
     capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
     Asset::Reader assetReader = fr.getRoot<Asset>();
 
-    AssetPreviewDialog *dialog = new AssetPreviewDialog(this);
-
-    capnp::MallocMessageBuilder builder;
-    Asset::Builder assetBuilder = builder.initRoot<Asset>();
-    bakeImpl(assetReader, assetBuilder, true);
-    dialog->initFromAsset(assetBuilder);
 
 
-
-
-//    if( assetReader.hasPixelData() && assetReader.getPixelData().hasStored())
-//    {
-//        QImage refImage;
-//        capnp::Data::Reader data = assetReader.getPixelData().getStored().getData();
-//        refImage.loadFromData(data.begin(), data.size());
-//        dialog->initFromImage(refImage);
-//    }
+    if( assetReader.hasPixelData() )
     {
+        AssetPreviewDialog *dialog = new AssetPreviewDialog(this);
 
         capnp::MallocMessageBuilder builder;
         Asset::Builder assetBuilder = builder.initRoot<Asset>();
-        bakeImpl(assetReader, assetBuilder, false);
+        bakeImpl(assetReader, assetBuilder, true);
         dialog->initFromAsset(assetBuilder);
+
+
+
+
+    //    if( assetReader.hasPixelData() && assetReader.getPixelData().hasStored())
+    //    {
+    //        QImage refImage;
+    //        capnp::Data::Reader data = assetReader.getPixelData().getStored().getData();
+    //        refImage.loadFromData(data.begin(), data.size());
+    //        dialog->initFromImage(refImage);
+    //    }
+        {
+
+            capnp::MallocMessageBuilder builder;
+            Asset::Builder assetBuilder = builder.initRoot<Asset>();
+            bakeImpl(assetReader, assetBuilder, false);
+            dialog->initFromAsset(assetBuilder);
+        }
+        dialog->setAttribute( Qt::WA_DeleteOnClose, true );
+        dialog->setVisible(true);
     }
-    dialog->setAttribute( Qt::WA_DeleteOnClose, true );
-    dialog->setVisible(true);
+    else if( assetReader.hasMeshData() )
+    {
+#if 1
+        AssetPreviewDialog *dialog = new AssetPreviewDialog(this);
+        dialog->initFromAsset(assetReader);
+        dialog->setAttribute( Qt::WA_DeleteOnClose, true );
+        dialog->setVisible(true);
+#else
+        auto qwin = new QQuickWindow();
+        qwin->setVisible(true);
+#endif
+
+    }
+
 }
 
 void MainWindow::on_previewCache_previewIconsChanged(QSet<QUuid> ids)

@@ -20,9 +20,6 @@ public:
     ~AssetPreviewDialog();
 
     void initFromAsset(cp::asset::Asset::Reader reader);
-    void initFromImage(const QImage &image);
-private slots:
-    void on_horizontalSlider_sliderMoved(int position);
 
 private:
     Ui::AssetPreviewDialog *ui;

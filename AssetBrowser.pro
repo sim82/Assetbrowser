@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui quick
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -31,7 +31,11 @@ SOURCES +=\
     ElementViewDelegate.cpp \
     FlowLayout.cpp \
     Main.cpp \
-    MainWindow.cpp
+    MainWindow.cpp \
+    AssetPreviewPixelData.cpp \
+    AssetPreviewMeshData.cpp \
+    MyGLWidget.cpp \
+    SceneMeshDBViewer.cpp
 
 HEADERS  += \
     asset.capnp.h \
@@ -47,14 +51,21 @@ HEADERS  += \
     BrowserContent.h \
     ElementViewDelegate.h \
     FlowLayout.h \
-    MainWindow.h
+    MainWindow.h \
+    AssetPreviewPixelData.h \
+    AssetPreviewMeshData.h \
+    MyGLWidget.h \
+    GLNavigatable.h \
+    SceneMeshDBViewer.h
 
 FORMS    += \
     AssetProviderDialog.ui \
     AssetBrowserElement.ui \
     AssetPreviewDialog.ui \
     BrowserContent.ui \
-    MainWindow.ui
+    MainWindow.ui \
+    AssetPreviewPixelData.ui \
+    AssetPreviewMeshData.ui \
 
 RESOURCES += \
     resources.qrc
