@@ -40,26 +40,26 @@ private:
     bool &getKey(const Qt::Key &key);
     bool anyKeyPressed() const;
 
-    float lon_;
-    float lat_;
+    float lon_{0};
+    float lat_{0};
     QPointF lastMousePos_;
-    bool mousePressed_;
+    bool mousePressed_{false};
 
-    bool forwardPressed_;
-    bool backwardPressed_;
-    bool rightPressed_;
-    bool leftPressed_;
+    bool forwardPressed_{false};
+    bool backwardPressed_{false};
+    bool rightPressed_{false};
+    bool leftPressed_{false};
 
-    bool nullPressed_;
+    bool nullPressed_{false};
 
-    QTimer *moveTimer;
+    QTimer *moveTimer{nullptr};
 
     QVector3D forwardVelocity_;
     QVector3D rightVelocity_;
 
     QVector3D pos_;
 
-    bool stateChanged_;
+    bool stateChanged_{false};
     QScopedPointer<GLNavigatable> navigatable_;
 };
 

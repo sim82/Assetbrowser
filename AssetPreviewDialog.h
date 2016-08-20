@@ -26,6 +26,7 @@ private:
     QGraphicsScene *scene;
     qreal xoffset;
     std::vector<QGraphicsPixmapItem *> pixmapItems;
+    QWidget *widget_{nullptr};
 };
 
 #endif // ASSETPREVIEWDIALOG_H

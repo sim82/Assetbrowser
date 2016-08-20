@@ -65,7 +65,7 @@ FORMS    += \
     BrowserContent.ui \
     MainWindow.ui \
     AssetPreviewPixelData.ui \
-    AssetPreviewMeshData.ui \
+    AssetPreviewMeshData.ui
 
 RESOURCES += \
     resources.qrc

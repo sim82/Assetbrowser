@@ -14,16 +14,7 @@
 
 MyGLWidget::MyGLWidget(QWidget *parent)
     : QOpenGLWidget(parent)
-    , lon_(0)
-    , lat_(0)
-    , mousePressed_(false)
-    , forwardPressed_(false)
-    , backwardPressed_(false)
-    , rightPressed_(false)
-    , leftPressed_(false)
     , moveTimer(new QTimer(this))
-    , stateChanged_(false)
-
 {
     moveTimer->setObjectName("moveTimer");
     QMetaObject::connectSlotsByName(this);
@@ -58,8 +49,6 @@ void MyGLWidget::setNavigatable(std::unique_ptr<GLNavigatable> navigatable)
 
 void MyGLWidget::initializeGL()
 {
-
-
     QOpenGLWidget::initializeGL();
     QOpenGLFunctions::initializeOpenGLFunctions();
 

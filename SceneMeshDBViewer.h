@@ -20,11 +20,14 @@ public:
     void draw() override;
 
 private:
+    void drawElementsFallback(cp::scene::AttributeArrayInterleaved::Reader array, uint attributeIndex);
+
     std::unique_ptr<capnp::MallocMessageBuilder> messageBuilder_;
     cp::asset::AssetMeshData::Reader reader_;
 
     QMap<int, QOpenGLBuffer> elementArrays_;
     QMap<int, QOpenGLBuffer> indexArrays_;
+    bool bGlFuncInit_{false};
 };
 
 #endif // SCENEMESHDBVIEWER_H

@@ -145,8 +145,8 @@ MainWindow::MainWindow(QWidget *parent) :
                 QStandardItem *item = new QStandardItem();
                 item->setData( uuids[i], ElementViewDelegate::RawDataRole);
                 item->setData( defaultIcon, ElementViewDelegate::IconRole);
-                idToRowAndModelMap.insert(uuids[i], qMakePair(itemModel->rowCount(), itemModel));
                 itemModel->appendRow(item);
+                idToRowAndModelMap.insert(uuids[i], qMakePair(item, ac));
             }
         }
     }
@@ -164,15 +164,20 @@ void MainWindow::on_listView_doubleClicked(const QModelIndex &index)
 {
     QUuid id = index.data(ElementViewDelegate::RawDataRole).toUuid();
 
-    // HACKHACKHACK!!!
-    const AssetCollection::Entry &ent = collections_.back()->entry(id);
+    auto it = idToRowAndModelMap.find(id);
+    if( it == idToRowAndModelMap.end() )
+    {
+        throw std::runtime_error( "no collection for id");
+    }
+
+
+    auto collection = it.value().second;
+    const AssetCollection::Entry &ent = collection->entry(id);
 
     capnp::ReaderOptions readerOptions;
     //readerOptions.traversalLimitInWords = 1024 * 1024 * 1024;
     capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData, ent.file.size() / sizeof(capnp::word)));
     Asset::Reader assetReader = fr.getRoot<Asset>();
-
-
 
     if( assetReader.hasPixelData() )
     {
@@ -182,9 +187,6 @@ void MainWindow::on_listView_doubleClicked(const QModelIndex &index)
         Asset::Builder assetBuilder = builder.initRoot<Asset>();
         bakeImpl(assetReader, assetBuilder, true);
         dialog->initFromAsset(assetBuilder);
-
-
-
 
     //    if( assetReader.hasPixelData() && assetReader.getPixelData().hasStored())
     //    {
@@ -230,9 +232,10 @@ void MainWindow::on_previewCache_previewIconsChanged(QSet<QUuid> ids)
             throw std::runtime_error( "no known model row for id");
         }
 
-        int row = idIt.value().first;
-        QStandardItemModel *model = idIt.value().second;
-        QModelIndex index = model->index(row, 0);
+        //int row = idIt.value().first;
+        auto item = idIt.value().first;
+        QStandardItemModel *model = item->model();
+        QModelIndex index = item->index();
         model->setData(index, previewCache->get(idIt.key()), ElementViewDelegate::IconRole);
 
 
@@ -292,20 +295,18 @@ void MainWindow::on_preloadTimer_timeout()
             throw std::runtime_error( "no known model row for id");
         }
 
-        QStandardItemModel *model = idIt.value().second;
+        auto item = idIt.value().first;
+        QStandardItemModel *model = item->model();
         if( model != curModel )
         {
             continue;
         }
 
-        int row = idIt.value().first;
-        QModelIndex index = model->index(row, 0);
+
+        QModelIndex index = item->index();
 
         QRect rect = ui->listView->visualRect(index);
-
-
         bool visible = viewRect.intersects(rect);
-
         if( !visible )
         {
             continue;

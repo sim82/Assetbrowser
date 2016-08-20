@@ -2,6 +2,7 @@
 #include "capnp/serialize.h"
 #include "scene.capnp.h"
 #include <iostream>
+#include <QVector3D>
 
 SceneMeshDBViewer::SceneMeshDBViewer(cp::asset::AssetMeshData::Reader reader)
     : messageBuilder_(std::make_unique<capnp::MallocMessageBuilder>())
@@ -16,6 +17,12 @@ SceneMeshDBViewer::~SceneMeshDBViewer() {}
 
 void SceneMeshDBViewer::draw()
 {
+    if (!bGlFuncInit_)
+    {
+        QOpenGLFunctions::initializeOpenGLFunctions();
+        bGlFuncInit_ = true;
+    }
+
     glFrontFace(GL_CW);
 
     int i = 0;
@@ -38,6 +45,38 @@ void SceneMeshDBViewer::draw()
                 cp::scene::AttributeArrayInterleaved::Attribute::Reader attribute = attributeList[j];
                 if (attribute.getName() == "a_position")
                 {
+#if 1
+                    glCullFace(GL_BACK);
+                    glEnable(GL_CULL_FACE);
+                    // glDisable(GL_CULL_FACE);
+
+                    {
+
+                        glColor3f(0, 0, 0);
+
+                        // glColor3f( 0.2, 1.0, 0.2 );
+                        glPolygonMode(GL_FRONT, GL_LINE);
+
+                        // glDrawElements(GL_TRIANGLES, numIndex, GL_UNSIGNED_INT, (GLvoid *)nullptr);
+                        capnp::Data::Reader indexarrayReader = arrayReader.getIndexArray();
+                        // glBindBuffer(GL_ARRAY_BUFFER, 0);
+                        drawElementsFallback(arrayReader, j);
+                    }
+
+                    //if (/* DISABLES CODE */ (false))
+                    {
+                        glEnable(GL_POLYGON_OFFSET_FILL);
+                        qsrand(i);
+                        glPolygonOffset(-1.0, -1.0);
+                        glColor3f(0.2 + 0.2 * (qrand() / float(RAND_MAX)), qrand() / float(RAND_MAX),
+                                  0.2 + 0.2 * (qrand() / float(RAND_MAX)));
+
+
+                        glPolygonMode(GL_FRONT, GL_FILL);
+                        glDisable(GL_POLYGON_OFFSET_FILL);
+                        drawElementsFallback(arrayReader, j);
+                    }
+#else
                     uint32_t stride   = arrayReader.getAttributeStride();
                     uint32_t offset   = attribute.getOffset();
                     uint32_t numIndex = arrayReader.getNumIndex();
@@ -136,7 +175,7 @@ void SceneMeshDBViewer::draw()
                         }
                         glDisableVertexAttribArray(0);
                     }
-
+#endif
                     breakOuter = true;
                     break;
                 }
@@ -152,3 +191,44 @@ void SceneMeshDBViewer::draw()
         std::cout << "meeeeeeeeep\n";
     }
 }
+
+void SceneMeshDBViewer::drawElementsFallback(cp::scene::AttributeArrayInterleaved::Reader array, uint attributeIndex)
+{
+    auto attribute  = array.getAttributes()[attributeIndex];
+    auto stride     = array.getAttributeStride();
+    auto offset     = attribute.getOffset();
+    auto numIndex   = array.getNumIndex();
+    auto indexArray = (GLint const *)array.getIndexArray().begin();
+
+    auto base = array.getAttributeArray().begin();
+
+    QVector3D mid(0,0,0);
+    for (int i = 0; i < numIndex; i += 3)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            auto index = indexArray[i + j];
+            auto pos   = (GLfloat const *)(base + index * stride + offset);
+            mid += QVector3D(pos[0], pos[1], pos[2]);
+            //glVertex3fv(pos);
+        }
+    }
+
+    mid /= float(numIndex/3);
+
+    glBegin(GL_TRIANGLES);
+    for (int i = 0; i < numIndex; i += 3)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            auto index = indexArray[i + j];
+            auto pos   = (GLfloat const *)(base + index * stride + offset);
+
+            QVector3D xp(pos[0], pos[1], pos[2]);
+            xp -= mid;
+            glVertex3f(xp.x(), xp.y(), xp.z());
+        }
+    }
+    glEnd();
+}
+

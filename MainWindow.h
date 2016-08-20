@@ -21,6 +21,8 @@ class ElementViewDelegate;
 
 class QFileSystemModel;
 class QTimer;
+class QStandardItem;
+
 namespace Ui {
 class MainWindow;
 }
@@ -36,19 +38,12 @@ public:
 private slots:
     void on_listView_doubleClicked(const QModelIndex &index);
     void on_previewCache_previewIconsChanged(QSet<QUuid> ids);
-
     void on_treeView_clicked(const QModelIndex &index);
-
     void on_treeView_activated(const QModelIndex &index);
-
     void on_treeView_pressed(const QModelIndex &index);
-
     void on_treeView_entered(const QModelIndex &index);
-
     void listviewScrollbar_valueChanged(int);
-
     void on_preloadTimer_timeout();
-
     void on_elementViewDelegate_itemPainted(QUuid id);
 
 private:
@@ -65,7 +60,7 @@ private:
     AssetCollectionPreviewCache *previewCache;
     //QMap<QUuid, int> idToRowMap;
 
-    QMap<QUuid, QPair<int, QStandardItemModel *>> idToRowAndModelMap;
+    QMap<QUuid, QPair<QStandardItem *, AssetCollection*>> idToRowAndModelMap;
 
     QFileSystemModel *dirModel;
 
