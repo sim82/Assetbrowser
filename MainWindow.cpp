@@ -106,8 +106,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->listView->setDropIndicatorShown(true);
     ui->listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
+//    ui->listView->
     ui->listView->setItemDelegate(elementViewDelegate);
-    ui->listView->setViewMode(QListView::IconMode);
+//    ui->listView->setViewMode(QListView::IconMode);
     ui->listView->setResizeMode(QListView::Adjust);
     ui->listView->setIconSize(QSize(128, 128));
 
@@ -133,6 +134,7 @@ MainWindow::MainWindow(QWidget *parent) :
         itemModels.insert(*itPrefix, itemModel);
         currentItemModel = *itPrefix;
         ui->listView->setModel(itemModel);
+        ui->itemsTreeView->setModel(itemModel);
 
 
         for( auto ac : collections_ )
@@ -145,7 +147,16 @@ MainWindow::MainWindow(QWidget *parent) :
                 QStandardItem *item = new QStandardItem();
                 item->setData( uuids[i], ElementViewDelegate::RawDataRole);
                 item->setData( defaultIcon, ElementViewDelegate::IconRole);
-                itemModel->appendRow(item);
+                item->setData( uuids[i].toString(), Qt::DisplayRole );
+
+
+                auto const& entry = ac->entry(uuids[i]);
+                QStandardItem *sizeItem = new QStandardItem();
+                sizeItem->setData( entry.file.size(), Qt::DisplayRole );
+                sizeItem->setData( uuids[i], ElementViewDelegate::RawDataRole);
+
+
+                itemModel->appendRow({item, sizeItem});
                 idToRowAndModelMap.insert(uuids[i], qMakePair(item, ac));
             }
         }
@@ -265,6 +276,7 @@ void MainWindow::on_treeView_pressed(const QModelIndex &index)
         QStandardItemModel *model = itemModels[currentItemModel];
 
         ui->listView->setModel(model);
+        ui->itemsTreeView->setModel(model);
     }
 }
 
@@ -343,3 +355,8 @@ void MainWindow::on_elementViewDelegate_itemPainted(QUuid id)
 #endif
 }
 
+
+void MainWindow::on_itemsTreeView_doubleClicked(const QModelIndex &index)
+{
+    on_listView_doubleClicked(index);
+}

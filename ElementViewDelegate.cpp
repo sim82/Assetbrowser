@@ -77,68 +77,8 @@ static const char *mimetypeToQtImageType(const char *mimetype)
 void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                                 const QModelIndex &index) const
 {
-    QStyledItemDelegate::paint(painter,option,index);
-
-
+    //QStyledItemDelegate::paint(painter,option,index);
     painter->save();
-
-
-
-
-//    if( !index.data(IconRole).isNull())
-//    {
-//        QImage image = qvariant_cast<QImage>(index.data(IconRole));
-
-//        auto pixmap = QPixmap::fromImage(image.mirrored());
-
-//        QRect iconRect = option.rect;
-//        iconRect.adjust(8,8, -8, -8);
-
-
-//        if( option.decorationSize.width() < 96 )
-//        {
-//            painter->drawPixmap(iconRect, pixmap);
-//            //    painter->setFont(font);
-//            //    painter->drawText(headerRect,headerText);
-
-
-//            //    painter->setFont(SubFont);
-//            //    painter->drawText(subheaderRect.left(),subheaderRect.top()+17,subText);
-
-//            painter->restore();
-//            return;
-
-//        }
-//        QFont font = QApplication::font();
-//        QFont SubFont = QApplication::font();
-//        //font.setPixelSize(font.weight()+);
-//        font.setBold(true);
-//        SubFont.setWeight(SubFont.weight()-2);
-//        QFontMetrics fm(font);
-
-//        //QIcon icon = qvariant_cast<QIcon>(index.data(IconRole));
-//        //QPixmap pixmap = qvariant_cast<QPixmap>(index.data(IconRole));
-//        QString headerText = qvariant_cast<QString>(index.data(headerTextRole));
-//        QString subText = qvariant_cast<QString>(index.data(subHeaderTextrole));
-
-
-
-//        QSize size = fitSize( pixmap.size(), iconRect.size() );
-//        //    painter->drawPixmap(QRect(iconRect.left()
-//        //                              , iconRect.top()
-//        //                              , iconRect.width()
-//        //                              , iconRect.height())
-//        //                        ,pixmap);
-//        QRect headerRect(option.rect.left(), option.rect.top(), option.rect.width(), fm.height());
-//        headerRect.adjust(8, 0, -8, 0);
-//        painter->drawText(headerRect, Qt::AlignRight|Qt::AlignVCenter, headerText);
-//        painter->drawPixmap(QRect(iconRect.left()
-//                                  , iconRect.top() + fm.height() + 8
-//                                  , size.width()
-//                                  , size.height())
-//                        ,pixmap);
-//    }
-//    else if( !index.data(RawDataRole).isNull())
     {
 
         QUuid id = index.data(RawDataRole).toUuid();
@@ -151,7 +91,7 @@ void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         const QIcon& icon = qvariant_cast<QIcon>(index.data(IconRole));
 #endif
 
-        QString headerText = id.toString();
+        QString headerText = index.data(Qt::DisplayRole).toString();
         emit itemPainted(id);
 
 //        cache_.use(id);
@@ -181,16 +121,6 @@ void ElementViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         QRect textRect(QPoint(0,0), QSize(64 + 32, fm.height() * 2));
         textRect.moveCenter(textBox.center());
         textRect.moveTop( textBox.top() );
-
-//        painter->setPen(Qt::NoPen);
-//        painter->setBrush(option.palette.window());
-//        painter->drawRect(option.rect);
-
-//        QRect bgRect = option.rect;
-//        bgRect -= QMargins(1, 1, 1, 1);
-//        bgRect.moveCenter(option.rect.center());
-//        painter->setBrush(QBrush(Qt::gray));
-//        painter->drawRect(bgRect);
 
         painter->setPen(QPen(option.palette.windowText(), 1.0));
         painter->drawText(textRect, Qt::AlignHCenter|Qt::AlignTop|Qt::TextWrapAnywhere, headerText);

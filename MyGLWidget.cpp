@@ -24,7 +24,7 @@ MyGLWidget::MyGLWidget(QWidget *parent)
 
     setFocusPolicy(Qt::ClickFocus);
 
-#if 0
+#if 1
     QSurfaceFormat f = QSurfaceFormat::defaultFormat();
     f.setDepthBufferSize(24);
     setFormat(f);
@@ -54,6 +54,7 @@ void MyGLWidget::initializeGL()
 
     QSurfaceFormat f = format();
     std::cout << "format " << f.redBufferSize() << " " << f.depthBufferSize() << std::endl;
+
 
 
     //    vao.bind();
@@ -97,13 +98,13 @@ void MyGLWidget::paintGL()
     ////    GLfloat cyan[] = {0.f, .8f, .8f, 1.f};
     ////    glMaterialfv(GL_FRONT, GL_DIFFUSE, cyan);
 
-    glDisable(GL_CULL_FACE);
-    glColor3f(1.0, 0.0, 0.0);
-    glBegin(GL_TRIANGLES);
-    glVertex3f(0, 0, 0);
-    glVertex3f(1, 0, 0);
-    glVertex3f(1, 1, 0);
-    glEnd();
+//    glDisable(GL_CULL_FACE);
+//    glColor3f(1.0, 0.0, 0.0);
+//    glBegin(GL_TRIANGLES);
+//    glVertex3f(0, 0, 0);
+//    glVertex3f(1, 0, 0);
+//    glVertex3f(1, 1, 0);
+//    glEnd();
 
 
     if (navigatable_)

@@ -46,6 +46,8 @@ private slots:
     void on_preloadTimer_timeout();
     void on_elementViewDelegate_itemPainted(QUuid id);
 
+    void on_itemsTreeView_doubleClicked(const QModelIndex &index);
+
 private:
     Ui::MainWindow *ui;
     ElementViewDelegate *elementViewDelegate;
