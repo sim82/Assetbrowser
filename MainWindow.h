@@ -48,6 +48,12 @@ private slots:
 
     void on_itemsTreeView_doubleClicked(const QModelIndex &index);
 
+    void on_tabWidget_currentChanged(int index);
+
+    void on_itemsTreeView_selection_currentChanged(const QModelIndex &index, const QModelIndex &prev);
+
+    void on_listView_selection_currentChanged(const QModelIndex &index, const QModelIndex &prev);
+
 private:
     Ui::MainWindow *ui;
     ElementViewDelegate *elementViewDelegate;
@@ -70,6 +76,8 @@ private:
 
     QTimer *preloadTimer;
     QSet<QUuid> preloadSet;
+
+    QModelIndex selectedIndex_;
 };
 
 #endif // MAINWINDOW_H
