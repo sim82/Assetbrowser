@@ -35,8 +35,8 @@ SOURCES +=\
     AssetPreviewMeshData.cpp \
     MyGLWidget.cpp \
     SceneMeshDBViewer.cpp \
-    qt3dviewer.cpp \
-    scenemodifier.cpp
+    CQt3dAssetViewer.cpp \
+    CSceneAttributeArrayInterleavedRenderer.cpp
 
 HEADERS  += \
     asset.capnp.h \
@@ -58,7 +58,8 @@ HEADERS  += \
     MyGLWidget.h \
     GLNavigatable.h \
     SceneMeshDBViewer.h \
-    scenemodifier.h
+    CQt3dAssetViewer.h \
+    CSceneAttributeArrayInterleavedRenderer.h
 
 FORMS    += \
     AssetProviderDialog.ui \

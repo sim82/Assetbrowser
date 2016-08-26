@@ -115,8 +115,6 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->listView->verticalScrollBar(), SIGNAL(valueChanged(int)), this,
                      SLOT(listviewScrollbar_valueChanged(int)));
 
-
-
     providerServer_ = new AssetProviderServer(*collections_.front(), this);
     providerServer_->start();
 
@@ -218,20 +216,22 @@ void MainWindow::on_listView_doubleClicked(const QModelIndex &index)
         dialog->setAttribute(Qt::WA_DeleteOnClose, true);
         dialog->setVisible(true);
 
-
 #else
-        auto aalr = assetReader.getMeshData().getAttributeArrayInterleavedList();
+        showQt3dAssetViewer();
 
-        if (aalr.size() > 0)
-        {
-            std::vector<cp::scene::AttributeArrayInterleaved::Reader> v;
-            //std::copy( aalr.begin(), aalr.end(), std::back_inserter(v));
-            for( auto a : aalr )
-            {
-                v.emplace_back(a);
-            }
-            qt3dviewer(v);
-        }
+        qt3dAssetViewer_->addAsset(assetReader);
+//        auto aalr = assetReader.getMeshData().getAttributeArrayInterleavedList();
+
+//        if (aalr.size() > 0)
+//        {
+//            std::vector<cp::scene::AttributeArrayInterleaved::Reader> v;
+//            //std::copy( aalr.begin(), aalr.end(), std::back_inserter(v));
+//            for( auto a : aalr )
+//            {
+//                v.emplace_back(a);
+//            }
+//            qt3dviewer(v);
+//        }
 #endif
     }
 }
@@ -364,4 +364,46 @@ void MainWindow::on_itemsTreeView_selection_currentChanged(const QModelIndex &in
 void MainWindow::on_listView_selection_currentChanged(const QModelIndex &index, const QModelIndex &prev)
 {
     selectedIndex_ = index;
+}
+
+void MainWindow::on_pbViewAll_clicked()
+{
+    auto items = ui->itemsTreeView->selectionModel()->selectedIndexes();
+
+    for (auto index : items)
+    {
+        QUuid id = index.data(ElementViewDelegate::RawDataRole).toUuid();
+
+        auto it = idToRowAndModelMap.find(id);
+        if (it == idToRowAndModelMap.end())
+        {
+            throw std::runtime_error("no collection for id");
+        }
+
+        auto collection                   = it.value().second;
+        const AssetCollection::Entry &ent = collection->entry(id);
+
+        capnp::ReaderOptions readerOptions;
+        // readerOptions.traversalLimitInWords = 1024 * 1024 * 1024;
+        capnp::FlatArrayMessageReader fr(kj::ArrayPtr<const capnp::word>((capnp::word const *)ent.mappedData,
+                                                                         ent.file.size() / sizeof(capnp::word)));
+        Asset::Reader assetReader = fr.getRoot<Asset>();
+
+        if (assetReader.hasMeshData())
+        {
+            showQt3dAssetViewer();
+            qt3dAssetViewer_->addAsset(assetReader);
+        }
+    }
+}
+
+void MainWindow::showQt3dAssetViewer()
+{
+    if (qt3dAssetViewer_ == nullptr)
+    {
+        qt3dAssetViewer_ = new CQt3dAssetViewer();
+
+        qt3dAssetViewer_->resize(1200, 800);
+        qt3dAssetViewer_->show();
+    }
 }

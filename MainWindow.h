@@ -1,6 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "FlowLayout.h"
+#include "CQt3dAssetViewer.h"
+
+
 #include <QMainWindow>
 #include <QMap>
 #include <QSet>
@@ -9,7 +13,6 @@
 #include <QPair>
 #include <memory>
 #include <vector>
-#include "FlowLayout.h"
 class QStandardItemModel;
 
 class BundleData;
@@ -54,7 +57,11 @@ private slots:
 
     void on_listView_selection_currentChanged(const QModelIndex &index, const QModelIndex &prev);
 
+    void on_pbViewAll_clicked();
+
 private:
+    void showQt3dAssetViewer();
+
     Ui::MainWindow *ui;
     ElementViewDelegate *elementViewDelegate;
     FlowLayout *flowLayout;
@@ -78,6 +85,8 @@ private:
     QSet<QUuid> preloadSet;
 
     QModelIndex selectedIndex_;
+
+    CQt3dAssetViewer *qt3dAssetViewer_{nullptr};
 };
 
 #endif // MAINWINDOW_H
