@@ -3,6 +3,7 @@
 #include "scene.capnp.h"
 #include <QVector3D>
 #include <iostream>
+#include <memory>
 
 SceneMeshDBViewer::SceneMeshDBViewer(cp::asset::AssetMeshData::Reader reader)
     : messageBuilder_(std::make_unique<capnp::MallocMessageBuilder>())

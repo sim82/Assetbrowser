@@ -4,8 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui quick
-
+QT       += core gui quick 3dextras
+CONFIG += c++14
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = AssetBrowser
@@ -14,7 +14,6 @@ TEMPLATE = app
 #QMAKE_CXXFLAGS += -std=c++14 -fsanitize=address
 #QMAKE_LFLAGS += -fsanitize=address
 
-QMAKE_CXXFLAGS += -std=c++14
 QMAKE_EXT_CPP += .c++
 SOURCES +=\
         asset.capnp.c++ \
@@ -35,7 +34,9 @@ SOURCES +=\
     AssetPreviewPixelData.cpp \
     AssetPreviewMeshData.cpp \
     MyGLWidget.cpp \
-    SceneMeshDBViewer.cpp
+    SceneMeshDBViewer.cpp \
+    qt3dviewer.cpp \
+    scenemodifier.cpp
 
 HEADERS  += \
     asset.capnp.h \
@@ -56,7 +57,8 @@ HEADERS  += \
     AssetPreviewMeshData.h \
     MyGLWidget.h \
     GLNavigatable.h \
-    SceneMeshDBViewer.h
+    SceneMeshDBViewer.h \
+    scenemodifier.h
 
 FORMS    += \
     AssetProviderDialog.ui \

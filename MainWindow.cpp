@@ -33,6 +33,8 @@ enum class pixel_format_type : uint32_t
     Luminance
 };
 
+void qt3dviewer(std::vector<cp::scene::AttributeArrayInterleaved::Reader> aas);
+
 class BundleData
 {
 public:
@@ -210,14 +212,26 @@ void MainWindow::on_listView_doubleClicked(const QModelIndex &index)
     }
     else if (assetReader.hasMeshData())
     {
-#if 1
+#if 0
         AssetPreviewDialog *dialog = new AssetPreviewDialog(this);
         dialog->initFromAsset(assetReader);
         dialog->setAttribute(Qt::WA_DeleteOnClose, true);
         dialog->setVisible(true);
+
+
 #else
-        auto qwin = new QQuickWindow();
-        qwin->setVisible(true);
+        auto aalr = assetReader.getMeshData().getAttributeArrayInterleavedList();
+
+        if (aalr.size() > 0)
+        {
+            std::vector<cp::scene::AttributeArrayInterleaved::Reader> v;
+            //std::copy( aalr.begin(), aalr.end(), std::back_inserter(v));
+            for( auto a : aalr )
+            {
+                v.emplace_back(a);
+            }
+            qt3dviewer(v);
+        }
 #endif
     }
 }
