@@ -1,15 +1,38 @@
 #include "CSceneAttributeArrayInterleavedRenderer.h"
 
+#include <QAttribute>
+#include <QBuffer>
+#include <QFile>
+#include <QtCore/QDebug>
 #include <capnp/message.h>
 #include <capnp/serialize.h>
-#include <QtCore/QDebug>
-#include <QBuffer>
-#include <QAttribute>
-#include <QFile>
-#include <memory>
 #include <cassert>
 #include <iostream>
+#include <memory>
 
+namespace
+{
+using namespace Qt3DRender;
+using Type = cp::scene::AttributeArrayInterleaved::Type;
+
+inline QAttribute::VertexBaseType mapType(Type type)
+{
+    switch (type)
+    {
+    case Type::FLOAT32:
+        return QAttribute::Float;
+    case Type::INT16:
+        return QAttribute::UnsignedShort;
+    case Type::INT32:
+        return QAttribute::UnsignedInt;
+    case Type::UINT16:
+        return QAttribute::UnsignedShort;
+    case Type::UINT32:
+        return QAttribute::UnsignedInt;
+    }
+    throw; //unreachable;
+}
+}
 
 std::vector<Qt3DRender::QAttribute *>
 CSceneAttributeArrayInterleavedRenderer::createAttributes(cp::scene::AttributeArrayInterleaved::Reader aa,
@@ -36,7 +59,7 @@ CSceneAttributeArrayInterleavedRenderer::createAttributes(cp::scene::AttributeAr
         auto qAttribute = new QAttribute(geometry);
         auto name       = it->second;
         qAttribute->setName(name);
-        qAttribute->setDataType(QAttribute::Float);
+        qAttribute->setDataType(mapType(attribute.getType()));
         qAttribute->setDataSize(attribute.getWidth());
         qAttribute->setAttributeType(QAttribute::VertexAttribute);
         qAttribute->setBuffer(buffer);
@@ -73,11 +96,11 @@ CSceneAttributeArrayInterleavedRenderer::CSceneAttributeArrayInterleavedRenderer
         auto indexArrayReader = meshData_.getIndexArray();
         indexArrayBuffer->setData(QByteArray::fromRawData(indexArrayReader.asChars().begin(), indexArrayReader.size()));
     }
-    assert(meshData_.getIndexType() == cp::scene::AttributeArrayInterleaved::Type::INT32);
+    assert(meshData_.getPrimitiveType() == cp::scene::AttributeArrayInterleaved::PrimitiveType::TRIANGLES_CCW);
 
     auto indexAttribute = new QAttribute(geometry);
     indexAttribute->setAttributeType(QAttribute::IndexAttribute);
-    indexAttribute->setDataType(QAttribute::UnsignedInt);
+    indexAttribute->setDataType(mapType(meshData_.getIndexType()));
     indexAttribute->setBuffer(indexArrayBuffer);
 
     indexAttribute->setCount(meshData_.getNumIndex());
@@ -89,7 +112,6 @@ CSceneAttributeArrayInterleavedRenderer::CSceneAttributeArrayInterleavedRenderer
     geometry->addAttribute(indexAttribute);
     QGeometryRenderer::setPrimitiveType(QGeometryRenderer::Triangles);
     QGeometryRenderer::setGeometry(geometry);
-
 }
 
 CSceneAttributeArrayInterleavedRenderer::~CSceneAttributeArrayInterleavedRenderer()

@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent)
     collections_.push_back(new AssetCollection("/home/sim/src_3dyne/dd_081131_exec/assets/", this));
     collections_.back()->fullRescan();
 
-    collections_.push_back(new AssetCollection("/tmp/shadermesh_assets/", this));
+    collections_.push_back(new AssetCollection("/tmp/shadermesh_assets/ccw", this));
     collections_.back()->fullRescan();
 
     previewCache = new AssetCollectionPreviewCache(this);
