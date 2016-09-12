@@ -1,5 +1,5 @@
 #include "AssetBrowserElement.h"
-#include "ui_assetbrowserelement.h"
+#include "ui_AssetBrowserElement.h"
 
 AssetBrowserElement::AssetBrowserElement(QWidget *parent) :
     QWidget(parent),
